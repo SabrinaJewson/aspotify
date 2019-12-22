@@ -1,0 +1,189 @@
+use crate::model::*;
+use reqwest::StatusCode;
+use serde::Deserialize;
+use std::error;
+use std::fmt::{self, Display, Formatter};
+
+/// An error caused by a Spotify endpoint.
+pub trait SpotifyError: error::Error {}
+
+/// An error caused by one of the Web API endpoints relating to authentication.
+#[derive(Debug, Clone, Deserialize)]
+pub struct AuthenticationError {
+    /// A high level description of the error.
+    pub error: String,
+    /// A mroe detailed description of the error.
+    pub error_description: String,
+}
+
+impl Display for AuthenticationError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}: {}", self.error, self.error_description)
+    }
+}
+
+impl error::Error for AuthenticationError {}
+impl SpotifyError for AuthenticationError {}
+
+/// A regular error object returns by endpoints of the API.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(from = "ErrorWrapper")]
+pub struct Error {
+    /// The HTTP status code of the error.
+    pub status: StatusCode,
+    /// A short description of the error's cause.
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ErrorInternal {
+    #[serde(deserialize_with = "deserialize_status_code")]
+    pub status: StatusCode,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ErrorWrapper {
+    error: ErrorInternal,
+}
+
+impl From<ErrorWrapper> for Error {
+    fn from(wrapper: ErrorWrapper) -> Self {
+        Self {
+            status: wrapper.error.status,
+            message: wrapper.error.message,
+        }
+    }
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "Error {}: {}", self.status, self.message)
+    }
+}
+
+impl error::Error for Error {}
+impl SpotifyError for Error {}
+
+/// An error returned by the player.
+#[derive(Debug, Clone, Deserialize)]
+pub struct PlayerError {
+    /// A short description of the error's cause.
+    pub message: String,
+    /// A reason for the error.
+    pub reason: PlayerErrorReason,
+}
+
+impl Display for PlayerError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}: {}", self.message, self.reason)
+    }
+}
+
+impl error::Error for PlayerError {}
+impl SpotifyError for PlayerError {}
+
+/// An HTTP error or an error from the endpoint.
+#[derive(Debug)]
+pub enum EndpointError<E: SpotifyError> {
+    HttpError(reqwest::Error),
+    SpotifyError(E),
+}
+
+impl<E: SpotifyError> Display for EndpointError<E> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::HttpError(e) => write!(f, "{}", e),
+            Self::SpotifyError(e) => write!(f, "{}", e),
+        }
+    }
+}
+
+impl<E: SpotifyError> error::Error for EndpointError<E> {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        match self {
+            Self::HttpError(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+impl<E: SpotifyError> From<reqwest::Error> for EndpointError<E> {
+    fn from(error: reqwest::Error) -> Self {
+        Self::HttpError(error)
+    }
+}
+
+impl<E: SpotifyError> From<E> for EndpointError<E> {
+    fn from(error: E) -> Self {
+        Self::SpotifyError(error)
+    }
+}
+
+/// A reason for an PlayerError.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum PlayerErrorReason {
+    /// There is no previous track in the context.
+    NoPrevTrack,
+    /// There is no next track in the context.
+    NoNextTrack,
+    /// The requested track does not exist.
+    NoSpecificTrack,
+    /// Playback is paused.
+    AlreadyPaused,
+    /// Playback is not paused.
+    NotPaused,
+    /// Playback is not on the local device.
+    NotPlayingLocally,
+    /// No track is currently playing.
+    NotPlayingTrack,
+    /// No context is currently playing.
+    NotPlayingContext,
+    /// The current context is endless, so the shuffle command cannot be applied.
+    EndlessContext,
+    /// The command cannot be performed on the current context.
+    ContextDisallow,
+    /// The command requested a new track and context to play, but it is the same as the old one
+    /// and there is a resume point.
+    AlreadyPlaying,
+    /// Too frequent track play.
+    RateLimited,
+    /// The context cannot be remote controlled.
+    RemoteControlDisallow,
+    /// It is not possible to remote control the device.
+    DeviceNotControllable,
+    /// It is not possible to remote control the device's volume.
+    VolumeControlDisallow,
+    /// The user does not have an active device.
+    NoActiveDevice,
+    /// The action requires premium, which the user doesn't have.
+    PremiumRequired,
+    /// The action is restricted due to unknown reasons.
+    Unknown,
+}
+
+impl Display for PlayerErrorReason {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        f.write_str(match self {
+            Self::NoPrevTrack => "There is no previous track",
+            Self::NoNextTrack => "There is no next track",
+            Self::NoSpecificTrack => "The requested track does not exist",
+            Self::AlreadyPaused => "Playback is paused",
+            Self::NotPaused => "Playback is not paused",
+            Self::NotPlayingLocally => "Playback is not on the local device",
+            Self::NotPlayingTrack => "No track is currently playing",
+            Self::NotPlayingContext => "No context is currently playing",
+            Self::EndlessContext => "The current context is endless",
+            Self::ContextDisallow => "The action cannot be performed on the current context",
+            Self::AlreadyPlaying => "The same track is already playing",
+            Self::RateLimited => "Too frequent track play",
+            Self::RemoteControlDisallow => "The context cannot be remote controlled",
+            Self::DeviceNotControllable => "It is not possible to control the device",
+            Self::VolumeControlDisallow => "It is not possible to control the device's volume",
+            Self::NoActiveDevice => "The user does not have an active device",
+            Self::PremiumRequired => "The action requires premium",
+            Self::Unknown => "The action is restricted for unknown reasons",
+        })
+    }
+}
