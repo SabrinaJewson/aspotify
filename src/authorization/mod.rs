@@ -60,6 +60,8 @@ impl ClientCredentials {
 }
 
 /// An access token for the Spotify API.
+///
+/// Generate these with CCFlow or AuthCodeFlow.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AccessToken {
     #[serde(rename = "access_token")]
