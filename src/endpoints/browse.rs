@@ -8,28 +8,31 @@ fn format_language(locale: (LanguageCode, CountryCode)) -> String {
     format!("{}_{}", locale.0.code(), locale.1.alpha2())
 }
 
-/// Get information about a category. If no locale is given or Spotify does not support the given
-/// locale, then it will default to American English.
+/// Get information about a category.
+///
+/// If no locale is given or Spotify does not support the given locale, then it will default to
+/// American English.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/browse/get-category/).
-pub async fn get_category<T: AccessToken>(
-    token: &T,
+pub async fn get_category(
+    token: &AccessToken,
     name: &str,
     locale: Option<(LanguageCode, CountryCode)>,
     country: Option<CountryCode>,
 ) -> Result<Category, EndpointError<Error>> {
     Ok(
-        request!(token, GET "/v1/browse/categories/{}", path_params = [name], optional_query_params = {"locale": locale.map(format_language), "country": country.map(|c| c.alpha2())}),
+        request!(token, GET "/v1/browse/categories/{}", path_params = [name], optional_query_params = {"locale": locale.map(format_language), "country": country.map(|c| c.alpha2())}, ret = Category),
     )
 }
 
-/// Get several categories. You do not choose which categories to get. Limit must be in the range
-/// [1..50]. If no locale is given or Spotify does not support the given locale, then it will
-/// default to American English.
+/// Get several categories.
+///
+/// You do not choose which categories to get. Limit must be in the range [1..50]. If no locale is
+/// given or Spotify does not support the given locale, then it will default to American English.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/browse/get-list-categories/).
-pub async fn get_categories<T: AccessToken>(
-    token: &T,
+pub async fn get_categories(
+    token: &AccessToken,
     limit: usize,
     offset: usize,
     locale: Option<(LanguageCode, CountryCode)>,
@@ -40,14 +43,20 @@ pub async fn get_categories<T: AccessToken>(
         categories: Page<Category>,
     };
 
-    Ok(request!(token, GET "/v1/browse/categories", query_params = {"limit": limit.to_string(), "offset": offset.to_string()}, optional_query_params = {"locale": locale.map(format_language), "country": country.map(|c| c.alpha2())}, ret = CategoryPage).categories)
+    Ok(request!(token, GET "/v1/browse/categories",
+        query_params = {"limit": limit.to_string(), "offset": offset.to_string()},
+        optional_query_params = {"locale": locale.map(format_language), "country": country.map(|c| c.alpha2())},
+        ret = CategoryPage
+    ).categories)
 }
 
-/// Get a category's playlists. Limit must be in the range [1..50].
+/// Get a category's playlists.
+/// 
+/// Limit must be in the range [1..50].
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/browse/get-categorys-playlists/).
-pub async fn get_category_playlists<T: AccessToken>(
-    token: &T,
+pub async fn get_category_playlists(
+    token: &AccessToken,
     name: &str,
     limit: usize,
     offset: usize,
@@ -67,12 +76,14 @@ pub async fn get_category_playlists<T: AccessToken>(
     .playlists)
 }
 
-/// Get featured playlists. Limit must be in the range [1..50]. The locale will default to American
-/// English and the timestamp will default to the current UTC time.
+/// Get featured playlists.
+///
+/// Limit must be in the range [1..50]. The locale will default to American English and the
+/// timestamp will default to the current UTC time.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/browse/get-list-featured-playlists/).
-pub async fn get_featured_playlists<T: AccessToken>(
-    token: &T,
+pub async fn get_featured_playlists(
+    token: &AccessToken,
     limit: usize,
     offset: usize,
     locale: Option<(LanguageCode, CountryCode)>,
@@ -81,16 +92,19 @@ pub async fn get_featured_playlists<T: AccessToken>(
 ) -> Result<FeaturedPlaylists, EndpointError<Error>> {
     Ok(request!(token, GET "/v1/browse/featured-playlists",
         query_params = {"limit": limit.to_string(), "offset": offset.to_string()},
-        optional_query_params = {"locale": locale.map(format_language), "timestamp": time.map(|t| t.to_rfc3339()), "country": country.map(|c| c.alpha2())}
+        optional_query_params = {"locale": locale.map(format_language), "timestamp": time.map(|t| t.to_rfc3339()), "country": country.map(|c| c.alpha2())},
+        ret = FeaturedPlaylists
     ))
 }
 
-/// Get new releases. Limit must be in the range [1..50]. The documentation claims to also return a
-/// message string, but in reality the API does not.
+/// Get new releases.
+///
+/// Limit must be in the range [1..50]. The documentation claims to also return a message string,
+/// but in reality the API does not.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/browse/get-list-new-releases/).
-pub async fn get_new_releases<T: AccessToken>(
-    token: &T,
+pub async fn get_new_releases(
+    token: &AccessToken,
     limit: usize,
     offset: usize,
     country: Option<CountryCode>,
@@ -103,15 +117,17 @@ pub async fn get_new_releases<T: AccessToken>(
     Ok(request!(token, GET "/v1/browse/new-releases", query_params = {"limit": limit.to_string(), "offset": offset.to_string()}, optional_query_params = {"country": country.map(|c| c.alpha2())}, ret = NewReleases).albums)
 }
 
-/// Get recommendations. Up to 5 seed values may be provided, that can be distributed in
-/// seed_artists, seed_genres and seed_tracks in any way. Limit must be in the range [1..100] and
-/// this target number of tracks may not always be met.
+/// Get recommendations.
+///
+/// Up to 5 seed values may be provided, that can be distributed in seed_artists, seed_genres and
+/// seed_tracks in any way. Limit must be in the range [1..100] and this target number of tracks
+/// may not always be met.
 ///
 /// `attributes` is a map of keys and values. See the reference for more info on this.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/browse/get-recommendations/).
-pub async fn get_recommendations<'iter, T: AccessToken, I>(
-    token: &T,
+pub async fn get_recommendations<'iter, I>(
+    token: &AccessToken,
     seed_artists: &[&str],
     seed_genres: &[&str],
     seed_tracks: &[&str],
@@ -125,14 +141,15 @@ where
     Ok(request!(token, GET "/v1/recommendations",
         query_params = {"seed_artists": seed_artists.join(","), "seed_genres": seed_genres.join(","), "seed_tracks": seed_tracks.join(","), "limit": limit.to_string()},
         optional_query_params = {"market": market.map(|m| m.to_string())},
-        additional_query_params = attributes
+        additional_query_params = attributes,
+        ret = Recommendations
     ))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::*;
     use crate::*;
+    use crate::endpoints::token;
     use chrono::DateTime;
     use isocountry::CountryCode;
     use isolanguage_1::LanguageCode;
@@ -158,7 +175,7 @@ mod tests {
             .unwrap();
         assert_eq!(categories.limit, 2);
         assert_eq!(categories.offset, 0);
-        assert_eq!(categories.items.len(), 2);
+        assert!(categories.items.len() <= 2);
     }
 
     #[tokio::test]
@@ -169,7 +186,7 @@ mod tests {
                 .unwrap();
         assert_eq!(playlists.limit, 1);
         assert_eq!(playlists.offset, 3);
-        assert_eq!(playlists.items.len(), 1);
+        assert!(playlists.items.len() <= 1);
     }
 
     #[tokio::test]
@@ -180,7 +197,7 @@ mod tests {
             0,
             None,
             Some(
-                DateTime::parse_from_rfc3339("2015-05-02T17:49:23Z")
+                DateTime::parse_from_rfc3339("2015-05-02T19:25:47Z")
                     .unwrap()
                     .into(),
             ),
@@ -191,7 +208,7 @@ mod tests {
         .playlists;
         assert_eq!(playlists.limit, 2);
         assert_eq!(playlists.offset, 0);
-        assert_eq!(playlists.items.len(), 2);
+        assert!(playlists.items.len() <= 2);
     }
 
     #[tokio::test]
@@ -199,7 +216,7 @@ mod tests {
         let releases = get_new_releases(&token().await, 1, 0, None).await.unwrap();
         assert_eq!(releases.limit, 1);
         assert_eq!(releases.offset, 0);
-        assert_eq!(releases.items.len(), 1);
+        assert!(releases.items.len() <= 1);
     }
 
     #[tokio::test]
@@ -219,7 +236,7 @@ mod tests {
         )
         .await
         .unwrap();
-        assert_eq!(recommendations.seeds.len(), 3);
+        assert!(recommendations.seeds.len() <= 3);
         assert_eq!(
             recommendations
                 .seeds
@@ -244,6 +261,6 @@ mod tests {
                 .count(),
             2
         );
-        assert_eq!(recommendations.tracks.len(), 3);
+        assert!(recommendations.tracks.len() <= 3);
     }
 }

@@ -10,7 +10,6 @@ pub use track::*;
 pub use user::*;
 
 use crate::util::*;
-use crate::AccessToken;
 use chrono::{DateTime, NaiveDate, Utc};
 use isocountry::CountryCode;
 use serde::{
@@ -19,7 +18,7 @@ use serde::{
 };
 use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 macro_rules! to_struct {
     ($(#[$attr:meta])* $name:ident { $($(#[$f_attr:meta])* $f_name:ident : $f_ty:ty,)* }) => {
@@ -112,8 +111,6 @@ where
     deserializer.deserialize_str(CopyrightType)
 }
 
-// TODO: CURSOR OBJECT
-
 /// An action that is currently not able to be performed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -159,6 +156,25 @@ pub struct Page<T> {
     pub offset: usize,
     /// The total number of items.
     pub total: usize,
+}
+
+/// A page of items, using a cursor to find the next page.
+#[derive(Debug, Clone, Deserialize)]
+pub struct CursorPage<T> {
+    /// The items in the page.
+    pub items: Vec<T>,
+    /// The maximum number of items in the page, as set by the request or a default value.
+    pub limit: usize,
+    /// The cursor used to find the next set of items.
+    pub cursors: Cursor,
+    /// The total number of items.
+    pub total: usize,
+}
+
+/// Object that contains the next CursorPage.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Cursor {
+    pub after: Option<String>,
 }
 
 /// Recommended tracks for the user.
@@ -226,22 +242,5 @@ impl Display for Market {
             Market::Country(code) => code.alpha2(),
             Market::FromToken => "from_token",
         })
-    }
-}
-
-// TODO: move to authorization_code.rs
-/// An authorization code access token.
-#[derive(Debug, Clone, Deserialize)]
-pub struct AuthCodeToken {
-    #[serde(rename = "access_token")]
-    pub token: String,
-    #[serde(rename = "expires_in", deserialize_with = "from_seconds")]
-    pub expires: Instant,
-    pub refresh_token: String,
-}
-
-impl AccessToken for AuthCodeToken {
-    fn get_token(&self) -> &str {
-        &self.token
     }
 }

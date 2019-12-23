@@ -4,21 +4,23 @@ use serde::Deserialize;
 /// Get information about an album.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/albums/get-album/).
-pub async fn get_album<T: AccessToken>(
-    token: &T,
+pub async fn get_album(
+    token: &AccessToken,
     id: &str,
     market: Option<Market>,
 ) -> Result<Album, EndpointError<Error>> {
     Ok(
-        request!(token, GET "/v1/albums/{}", path_params = [id], optional_query_params = {"market": market.map(|m| m.to_string())}),
+        request!(token, GET "/v1/albums/{}", path_params = [id], optional_query_params = {"market": market.map(|m| m.to_string())}, ret = Album),
     )
 }
 
-/// Get information about several albums. Maximum number of albums is 20.
+/// Get information about several albums.
+///
+/// Maximum number of albums is 20.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/albums/get-several-albums/).
-pub async fn get_albums<T: AccessToken>(
-    token: &T,
+pub async fn get_albums(
+    token: &AccessToken,
     ids: &[&str],
     market: Option<Market>,
 ) -> Result<Vec<Album>, EndpointError<Error>> {
@@ -30,24 +32,28 @@ pub async fn get_albums<T: AccessToken>(
     Ok(request!(token, GET "/v1/albums", query_params = {"ids": ids.join(",")}, optional_query_params = {"market": market.map(|m| m.to_string())}, ret = Albums).albums)
 }
 
-/// Get an album's tracks. It does not return all the tracks, but a page of tracks. Limit and offset determine attributes of the page. Limit has a maximum of 50.
+/// Get an album's tracks.
+///
+/// It does not return all the tracks, but a page of tracks. Limit and offset determine attributes
+/// of the page. Limit has a maximum of 50.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/albums/get-albums-tracks/).
-pub async fn get_album_tracks<T: AccessToken>(
-    token: &T,
+pub async fn get_album_tracks(
+    token: &AccessToken,
     id: &str,
     limit: usize,
     offset: usize,
     market: Option<Market>,
 ) -> Result<Page<TrackSimplified>, EndpointError<Error>> {
     Ok(
-        request!(token, GET "/v1/albums/{}/tracks", path_params = [id], query_params = {"limit": limit, "offset": offset}, optional_query_params = {"market": market.map(|m| m.to_string())}),
+        request!(token, GET "/v1/albums/{}/tracks", path_params = [id], query_params = {"limit": limit, "offset": offset}, optional_query_params = {"market": market.map(|m| m.to_string())}, ret = Page<TrackSimplified>),
     )
 }
 
 #[cfg(test)]
 mod tests {
     use crate::endpoints::*;
+    use crate::endpoints::token;
 
     #[tokio::test]
     async fn test_get_album() {
