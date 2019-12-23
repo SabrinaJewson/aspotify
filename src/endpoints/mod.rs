@@ -33,6 +33,8 @@ pub use playlists::*;
 pub use search::*;
 pub use tracks::*;
 pub use users_profile::*;
+use std::fmt::{self, Display, Formatter};
+use isocountry::CountryCode;
 
 macro_rules! request {
     (
@@ -110,6 +112,45 @@ mod playlists;
 mod search;
 mod tracks;
 mod users_profile;
+
+/// A market in which to limit the request to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Market {
+    /// A country code.
+    Country(CountryCode),
+    /// Deduce the current country from the access token. Not valid for client credentials.
+    FromToken,
+}
+
+impl Display for Market {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        f.write_str(match self {
+            Market::Country(code) => code.alpha2(),
+            Market::FromToken => "from_token",
+        })
+    }
+}
+
+/// A time range from which to calculate the response.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum TimeRange {
+    /// Use several years of data.
+    LongTerm,
+    /// Use approximately the last 6 months of data.
+    MediumTerm,
+    /// Use approximately the last 4 weeks of data.
+    ShortTerm,
+}
+
+impl Display for TimeRange {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        f.write_str(match self {
+            Self::LongTerm => "long_term",
+            Self::MediumTerm => "medium_term",
+            Self::ShortTerm => "short_term",
+        })
+    }
+}
 
 #[cfg(test)]
 async fn token() -> crate::AccessToken {

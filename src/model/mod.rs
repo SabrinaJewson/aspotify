@@ -17,7 +17,7 @@ use serde::{
     Deserialize, Deserializer,
 };
 use std::collections::HashMap;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Formatter};
 use std::time::Duration;
 
 macro_rules! to_struct {
@@ -225,22 +225,4 @@ pub enum DatePrecision {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Restrictions {
     pub reason: String,
-}
-
-/// A market in which to limit the request to.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
-pub enum Market {
-    /// A country code.
-    Country(CountryCode),
-    /// Deduce the current country from the access token. Not valid for client credentials.
-    FromToken,
-}
-
-impl Display for Market {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            Market::Country(code) => code.alpha2(),
-            Market::FromToken => "from_token",
-        })
-    }
 }

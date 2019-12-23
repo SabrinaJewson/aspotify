@@ -73,8 +73,11 @@ inherit_album_simplified!(
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AlbumType {
+    #[serde(alias = "ALBUM")]
     Album,
+    #[serde(alias = "SINGLE")]
     Single,
+    #[serde(alias = "COMPILATION")]
     Compilation,
 }
 
