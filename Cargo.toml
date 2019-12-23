@@ -18,6 +18,7 @@ chrono = { version = "0.4.10", features = ["serde"] }
 lazy_static = "1.4.0"
 isocountry = "0.2.0"
 isolanguage-1 = { version = "0.1.0", features = ["serde_support"] }
+rand = "0.7.2"
 
 # TEMPORARY, ONLY FOR DEBUGGING REMOVE AFTER U REMOVE THE #[cfg(test)] non-test PRINTS
 serde_json = "1.0.42"

@@ -5,18 +5,20 @@ use serde::Deserialize;
 /// Get information about an artist.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/artists/get-artist/).
-pub async fn get_artist<T: AccessToken>(
-    token: &T,
+pub async fn get_artist(
+    token: &AccessToken,
     id: &str,
 ) -> Result<Artist, EndpointError<Error>> {
-    Ok(request!(token, GET "/v1/artists/{}", path_params = [id]))
+    Ok(request!(token, GET "/v1/artists/{}", path_params = [id], ret = Artist))
 }
 
-/// Get information about several artists. Maximum number of artists is 50.
+/// Get information about several artists.
+/// 
+/// Maximum number of artists is 50.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/artists/get-several-artists/).
-pub async fn get_artists<T: AccessToken>(
-    token: &T,
+pub async fn get_artists(
+    token: &AccessToken,
     ids: &[&str],
 ) -> Result<Vec<Artist>, EndpointError<Error>> {
     #[derive(Deserialize)]
@@ -30,16 +32,18 @@ pub async fn get_artists<T: AccessToken>(
     )
 }
 
-/// Get an artist's albums. The include_groups parameter can specify which groups to include
-/// (album, single, appears_on, compilation). If not specified it includes them all. Limit and
-/// offset control the attributes of the resulting Page. Limit has a maximum of 50.
+/// Get an artist's albums.
+///
+/// The include_groups parameter can specify which groups to include (album, single, appears_on,
+/// compilation). If not specified it includes them all. Limit and offset control the attributes of
+/// the resulting Page. Limit has a maximum of 50.
 ///
 /// If no market is specified this function is likely to give duplicate albums, one for each
 /// market, so it is advised to provide a market.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/artists/get-artists-albums/).
-pub async fn get_artist_albums<T: AccessToken>(
-    token: &T,
+pub async fn get_artist_albums(
+    token: &AccessToken,
     id: &str,
     include_groups: Option<&[AlbumGroup]>,
     limit: usize,
@@ -58,15 +62,18 @@ pub async fn get_artist_albums<T: AccessToken>(
                     .join(",")
             ),
             "country": country.map(|c| c.alpha2())
-        }
+        },
+        ret = Page<ArtistsAlbum>
     ))
 }
 
-/// Get an artist's top tracks. Unlike most other endpoints, the country code is required. The response contains up to 10 tracks which are the artist's top tracks.
+/// Get an artist's top tracks.
+///
+/// Unlike most other endpoints, the country code is required. The response contains up to 10 tracks which are the artist's top tracks.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/artists/get-artists-top-tracks/).
-pub async fn get_artist_top<T: AccessToken>(
-    token: &T,
+pub async fn get_artist_top(
+    token: &AccessToken,
     id: &str,
     market: Market,
 ) -> Result<Vec<Track>, EndpointError<Error>> {
@@ -78,11 +85,13 @@ pub async fn get_artist_top<T: AccessToken>(
     Ok(request!(token, GET "/v1/artists/{}/top-tracks", path_params = [id], query_params = {"country": market.to_string()}, ret = Tracks).tracks)
 }
 
-/// Get an artist's related artists. These artists are similar in style to the given artist.
+/// Get an artist's related artists.
+///
+/// These artists are similar in style to the given artist.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/artists/get-related-artists/).
-pub async fn get_related_artists<T: AccessToken>(
-    token: &T,
+pub async fn get_related_artists(
+    token: &AccessToken,
     id: &str,
 ) -> Result<Vec<Artist>, EndpointError<Error>> {
     #[derive(Deserialize)]
@@ -98,8 +107,8 @@ pub async fn get_related_artists<T: AccessToken>(
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::*;
     use crate::*;
+    use crate::endpoints::token;
     use isocountry::CountryCode;
 
     #[tokio::test]
