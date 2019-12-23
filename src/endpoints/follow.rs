@@ -1,7 +1,7 @@
 use crate::*;
 use serde::Deserialize;
 
-/// Check if current user follows artists.
+/// Check if the current user follows some artists.
 ///
 /// Returns vector of bools that is in the same order as the given ids. Maximum 50 IDs. Requires
 /// `user-follow-read`.
@@ -16,7 +16,7 @@ pub async fn user_follows_artists(
     )
 }
 
-/// Check if current user follows users.
+/// Check if the current user follows some users.
 ///
 /// Return vector of bools that is in the same order as the given ids. Maximum 50 IDs. Requires
 /// `user-follow-read`.
@@ -31,7 +31,7 @@ pub async fn user_follows_users(
     )
 }
 
-/// Check if users follow a playlist.
+/// Check if some users follow a playlist.
 ///
 /// `id` is the id of the playlist and `user_ids` is the users who you want to check, maximum 5.
 /// Users can publicly or privately follow playlists; checking whether a user privately follows a
@@ -166,7 +166,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_follow_artists() {
-        // NOTE: this test only works if you follow < 49 artists as it only requests the first page.
+        // NOTE: This test only works if you follow < 49 artists as it only requests the first page.
         // You also must not follow Lemon Demon.
         let token = token().await;
 

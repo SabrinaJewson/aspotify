@@ -52,7 +52,7 @@ pub async fn get_album_tracks(
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::*;
+    use crate::*;
     use crate::endpoints::token;
 
     #[tokio::test]
