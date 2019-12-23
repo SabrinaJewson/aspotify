@@ -26,6 +26,13 @@ pub use albums::*;
 pub use artists::*;
 pub use browse::*;
 pub use follow::*;
+pub use library::*;
+pub use personalization::*;
+pub use player::*;
+pub use playlists::*;
+pub use search::*;
+pub use tracks::*;
+pub use users_profile::*;
 
 macro_rules! request {
     (
@@ -96,13 +103,13 @@ mod albums;
 mod artists;
 mod browse;
 mod follow;
-//mod library;
-//mod personalization;
-//mod player;
-//mod playlists;
-//mod search;
-//mod tracks;
-//mod users_profile;
+mod library;
+mod personalization;
+mod player;
+mod playlists;
+mod search;
+mod tracks;
+mod users_profile;
 
 #[cfg(test)]
 async fn token() -> crate::AccessToken {

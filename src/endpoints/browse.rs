@@ -25,7 +25,7 @@ pub async fn get_category(
     )
 }
 
-/// Get several categories.
+/// Get information about several categories.
 ///
 /// You do not choose which categories to get. Limit must be in the range [1..50]. If no locale is
 /// given or Spotify does not support the given locale, then it will default to American English.
