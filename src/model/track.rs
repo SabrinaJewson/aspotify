@@ -41,8 +41,8 @@ macro_rules! inherit_track_simplified {
             name: String,
             /// Link to a 30 second MP3 preview of the track, doesn't have to be there.
             preview_url: Option<String>,
-            /// The number of the track in its album; if the track has several discs, then it the number on
-            /// the specified disc.
+            /// The 1-indexed number of the track in its album; if the track has several discs,
+            /// then it the number on the specified disc.
             track_number: usize,
             /// Whether the track is from a local file.
             is_local: bool,
@@ -69,7 +69,7 @@ inherit_track_simplified!(
 );
 
 /// A link to a track.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct TrackLink {
     /// Known external URLs for this track.
     pub external_urls: HashMap<String, String>,
@@ -83,7 +83,7 @@ pub struct TrackLink {
 /// See [the Spotify Web API
 /// reference](https://developer.spotify.com/documentation/web-api/reference/object-model/#audio-features-object)
 /// for more details on each on the items.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct AudioFeatures {
     /// The [Spotify ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
     /// for the track.
@@ -105,7 +105,7 @@ pub struct AudioFeatures {
 }
 
 /// The mode of a song (major or minor).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Mode {
     Major,
@@ -113,18 +113,18 @@ pub enum Mode {
 }
 
 /// When and how a track was played.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct PlayHistory {
     /// The track the user listened to.
     pub track: TrackSimplified,
     /// When the track was played.
     pub played_at: DateTime<Utc>,
     /// The context from which the track was played.
-    pub context: Context,
+    pub context: Option<Context>,
 }
 
 /// Information about a track that has been saved.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct SavedTrack {
     /// When the track was saved.
     pub added_at: DateTime<Utc>,
@@ -133,7 +133,7 @@ pub struct SavedTrack {
 }
 
 /// The number of tracks an object contains.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Tracks {
     pub total: usize,
 }

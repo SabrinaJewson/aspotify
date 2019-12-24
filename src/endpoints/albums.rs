@@ -24,6 +24,10 @@ pub async fn get_albums(
     ids: &[&str],
     market: Option<Market>,
 ) -> Result<Vec<Album>, EndpointError<Error>> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
     #[derive(Deserialize)]
     struct Albums {
         albums: Vec<Album>,

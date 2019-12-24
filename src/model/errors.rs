@@ -8,7 +8,7 @@ use std::fmt::{self, Display, Formatter};
 pub trait SpotifyError: error::Error {}
 
 /// An error caused by one of the Web API endpoints relating to authentication.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct AuthenticationError {
     /// A high level description of the error.
     pub error: String,
@@ -25,9 +25,14 @@ impl Display for AuthenticationError {
 impl error::Error for AuthenticationError {}
 impl SpotifyError for AuthenticationError {}
 
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+struct ErrorWrapper<T> {
+    error: T,
+}
+
 /// A regular error object returns by endpoints of the API.
-#[derive(Debug, Clone, Deserialize)]
-#[serde(from = "ErrorWrapper")]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(from = "ErrorWrapper<ErrorInternal>")]
 pub struct Error {
     /// The HTTP status code of the error.
     pub status: StatusCode,
@@ -35,23 +40,18 @@ pub struct Error {
     pub message: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 struct ErrorInternal {
     #[serde(deserialize_with = "deserialize_status_code")]
-    pub status: StatusCode,
-    pub message: String,
+    status: StatusCode,
+    message: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-struct ErrorWrapper {
-    error: ErrorInternal,
-}
-
-impl From<ErrorWrapper> for Error {
-    fn from(wrapper: ErrorWrapper) -> Self {
+impl From<ErrorWrapper<ErrorInternal>> for Error {
+    fn from(error: ErrorWrapper<ErrorInternal>) -> Self {
         Self {
-            status: wrapper.error.status,
-            message: wrapper.error.message,
+            status: error.error.status,
+            message: error.error.message,
         }
     }
 }
@@ -65,13 +65,34 @@ impl Display for Error {
 impl error::Error for Error {}
 impl SpotifyError for Error {}
 
-/// An error returned by the player.
-#[derive(Debug, Clone, Deserialize)]
+/// An error returned by the player. It is an extension of Error, with an additional reason.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(from = "ErrorWrapper<PlayerErrorInternal>")]
 pub struct PlayerError {
+    /// The HTTP status code of the error.
+    pub status: StatusCode,
     /// A short description of the error's cause.
     pub message: String,
     /// A reason for the error.
     pub reason: PlayerErrorReason,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+struct PlayerErrorInternal {
+    #[serde(deserialize_with = "deserialize_status_code")]
+    status: StatusCode,
+    message: String,
+    reason: PlayerErrorReason,
+}
+
+impl From<ErrorWrapper<PlayerErrorInternal>> for PlayerError {
+    fn from(error: ErrorWrapper<PlayerErrorInternal>) -> Self {
+        Self {
+            status: error.error.status,
+            message: error.error.message,
+            reason: error.error.reason,
+        }
+    }
 }
 
 impl Display for PlayerError {
@@ -87,6 +108,7 @@ impl SpotifyError for PlayerError {}
 #[derive(Debug)]
 pub enum EndpointError<E: SpotifyError> {
     HttpError(reqwest::Error),
+    ParseError(serde_json::error::Error),
     SpotifyError(E),
 }
 
@@ -94,6 +116,7 @@ impl<E: SpotifyError> Display for EndpointError<E> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::HttpError(e) => write!(f, "{}", e),
+            Self::ParseError(e) => write!(f, "{}", e),
             Self::SpotifyError(e) => write!(f, "{}", e),
         }
     }
@@ -103,6 +126,7 @@ impl<E: SpotifyError> error::Error for EndpointError<E> {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             Self::HttpError(e) => Some(e),
+            Self::ParseError(e) => Some(e),
             _ => None,
         }
     }
@@ -114,6 +138,12 @@ impl<E: SpotifyError> From<reqwest::Error> for EndpointError<E> {
     }
 }
 
+impl<E: SpotifyError> From<serde_json::error::Error> for EndpointError<E> {
+    fn from(error: serde_json::error::Error) -> Self {
+        Self::ParseError(error)
+    }
+}
+
 impl<E: SpotifyError> From<E> for EndpointError<E> {
     fn from(error: E) -> Self {
         Self::SpotifyError(error)
@@ -121,7 +151,7 @@ impl<E: SpotifyError> From<E> for EndpointError<E> {
 }
 
 /// A reason for an PlayerError.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PlayerErrorReason {
     /// There is no previous track in the context.

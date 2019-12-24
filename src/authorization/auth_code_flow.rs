@@ -2,9 +2,9 @@
 //! Code](https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow)
 //! Spotify authorization flow.
 
-use crate::CLIENT;
+use super::{AccessToken, ClientCredentials};
 use crate::model::*;
-use super::{ClientCredentials, AccessToken};
+use crate::CLIENT;
 use lazy_static::lazy_static;
 use rand::Rng;
 use reqwest::Url;
@@ -208,7 +208,7 @@ impl AuthCodeFlow {
         let Response {
             refresh_token,
             token,
-        } = response.json().await?;
+        } = serde_json::from_str(&response.text().await?)?;
 
         Ok(Self {
             credentials,
@@ -253,10 +253,12 @@ impl AuthCodeFlow {
         drop(cache);
 
         let response = request.send().await?;
-        if !response.status().is_success() {
-            return Err(response.json::<AuthenticationError>().await?.into());
+        let status = response.status();
+        let text = response.text().await?;
+        if !status.is_success() {
+            return Err(EndpointError::SpotifyError(serde_json::from_str(&text)?));
         }
-        let token = response.json::<AccessToken>().await?;
+        let token = serde_json::from_str::<AccessToken>(&text)?;
         *self.cache.lock().await = token.clone();
         Ok(token)
     }
@@ -266,8 +268,15 @@ impl AuthCodeFlow {
 #[derive(Debug)]
 pub enum FromRedirectError {
     InvalidRedirect,
+    ParseError(serde_json::error::Error),
     SpotifyError(String),
     HttpError(reqwest::Error),
+}
+
+impl From<serde_json::error::Error> for FromRedirectError {
+    fn from(e: serde_json::error::Error) -> Self {
+        Self::ParseError(e)
+    }
 }
 
 impl From<reqwest::Error> for FromRedirectError {
@@ -280,6 +289,7 @@ impl Display for FromRedirectError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::InvalidRedirect => f.write_str("Invalid redirect URL"),
+            Self::ParseError(e) => write!(f, "{}", e),
             Self::SpotifyError(s) => f.write_str(&s),
             Self::HttpError(e) => write!(f, "{}", e),
         }
