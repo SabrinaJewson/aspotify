@@ -11,26 +11,31 @@ async fn main() {
     let credentials = ClientCredentials::from_env().unwrap();
 
     // Get the URL to send the user to, requesting all the scopes and redirecting to a non-existant website.
-    let url = aspotify::get_authorization_url(&credentials.id, &[
-        Scope::UgcImageUpload,
-        Scope::UserReadPlaybackState,
-        Scope::UserModifyPlaybackState,
-        Scope::UserReadCurrentlyPlaying,
-        Scope::Streaming,
-        Scope::AppRemoteControl,
-        Scope::UserReadEmail,
-        Scope::UserReadPrivate,
-        Scope::PlaylistReadCollaborative,
-        Scope::PlaylistModifyPublic,
-        Scope::PlaylistReadPrivate,
-        Scope::PlaylistModifyPrivate,
-        Scope::UserLibraryModify,
-        Scope::UserLibraryRead,
-        Scope::UserTopRead,
-        Scope::UserReadRecentlyPlayed,
-        Scope::UserFollowRead,
-        Scope::UserFollowModify,
-    ], false, "http://non.existant/");
+    let url = aspotify::get_authorization_url(
+        &credentials.id,
+        &[
+            Scope::UgcImageUpload,
+            Scope::UserReadPlaybackState,
+            Scope::UserModifyPlaybackState,
+            Scope::UserReadCurrentlyPlaying,
+            Scope::Streaming,
+            Scope::AppRemoteControl,
+            Scope::UserReadEmail,
+            Scope::UserReadPrivate,
+            Scope::PlaylistReadCollaborative,
+            Scope::PlaylistModifyPublic,
+            Scope::PlaylistReadPrivate,
+            Scope::PlaylistModifyPrivate,
+            Scope::UserLibraryModify,
+            Scope::UserLibraryRead,
+            Scope::UserTopRead,
+            Scope::UserReadRecentlyPlayed,
+            Scope::UserFollowRead,
+            Scope::UserFollowModify,
+        ],
+        false,
+        "http://non.existant/",
+    );
 
     // Get the user to authorize our application.
     println!("Go to this website: {}", url);

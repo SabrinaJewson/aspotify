@@ -5,15 +5,12 @@ use serde::Deserialize;
 /// Get information about an artist.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/artists/get-artist/).
-pub async fn get_artist(
-    token: &AccessToken,
-    id: &str,
-) -> Result<Artist, EndpointError<Error>> {
+pub async fn get_artist(token: &AccessToken, id: &str) -> Result<Artist, EndpointError<Error>> {
     Ok(request!(token, GET "/v1/artists/{}", path_params = [id], ret = Artist))
 }
 
 /// Get information about several artists.
-/// 
+///
 /// Maximum number of artists is 50.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/artists/get-several-artists/).
@@ -21,6 +18,10 @@ pub async fn get_artists(
     token: &AccessToken,
     ids: &[&str],
 ) -> Result<Vec<Artist>, EndpointError<Error>> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
     #[derive(Deserialize)]
     struct Artists {
         artists: Vec<Artist>,
@@ -107,8 +108,8 @@ pub async fn get_related_artists(
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
     use crate::endpoints::token;
+    use crate::*;
     use isocountry::CountryCode;
 
     #[tokio::test]

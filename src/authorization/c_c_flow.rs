@@ -2,9 +2,9 @@
 //! Credentials](https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow)
 //! Spotify authorization flow.
 
-use crate::CLIENT;
+use super::{AccessToken, ClientCredentials};
 use crate::model::*;
-use super::{ClientCredentials, AccessToken};
+use crate::CLIENT;
 use std::time::Instant;
 use tokio::sync::Mutex;
 
@@ -63,10 +63,12 @@ impl CCFlow {
             .body("grant_type=client_credentials")
             .send()
             .await?;
-        if !response.status().is_success() {
-            return Err(response.json::<AuthenticationError>().await?.into());
+        let status = response.status();
+        let text = response.text().await?;
+        if !status.is_success() {
+            return Err(EndpointError::SpotifyError(serde_json::from_str(&text)?));
         }
-        let token = response.json::<AccessToken>().await?;
+        let token = serde_json::from_str::<AccessToken>(&text)?;
         *self.cache.lock().await = token.clone();
         Ok(token)
     }

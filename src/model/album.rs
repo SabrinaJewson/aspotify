@@ -70,7 +70,7 @@ inherit_album_simplified!(
 );
 
 /// The type of album.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AlbumType {
     #[serde(alias = "ALBUM")]
@@ -83,7 +83,7 @@ pub enum AlbumType {
 
 /// When getting all an artist's albums, if the artist didn't release the album but instead
 /// appeared on it, this is set to AppearsOn.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AlbumGroup {
     Album,
@@ -104,7 +104,7 @@ impl Display for AlbumGroup {
 }
 
 /// Information about an album that has been saved.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct SavedAlbum {
     /// When the album was saved.
     pub added_at: DateTime<Utc>,

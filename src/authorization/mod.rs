@@ -3,13 +3,13 @@
 pub mod auth_code_flow;
 pub mod c_c_flow;
 
+use crate::util::*;
 pub use auth_code_flow::*;
 pub use c_c_flow::*;
-use crate::util::*;
+use serde::Deserialize;
 use std::env::{self, VarError};
 use std::ffi::OsStr;
-use serde::Deserialize;
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 
 /// An object that holds your Spotify Client ID and Client Secret.
 ///

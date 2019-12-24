@@ -11,6 +11,10 @@ pub async fn user_follows_artists(
     token: &AccessToken,
     ids: &[&str],
 ) -> Result<Vec<bool>, EndpointError<Error>> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
     Ok(
         request!(token, GET "/v1/me/following/contains", query_params = {"type": "artist", "ids": &&ids.join(",")}, ret = Vec<bool>),
     )
@@ -26,6 +30,10 @@ pub async fn user_follows_users(
     token: &AccessToken,
     ids: &[&str],
 ) -> Result<Vec<bool>, EndpointError<Error>> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
     Ok(
         request!(token, GET "/v1/me/following/contains", query_params = {"type": "user", "ids": &&ids.join(",")}, ret = Vec<bool>),
     )
@@ -43,6 +51,10 @@ pub async fn users_follow_playlist(
     id: &str,
     user_ids: &[&str],
 ) -> Result<Vec<bool>, EndpointError<Error>> {
+    if user_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
     Ok(
         request!(token, GET "/v1/playlists/{}/followers/contains", path_params = [id], query_params = {"ids": &&user_ids.join(",")}, ret = Vec<bool>),
     )
@@ -53,10 +65,11 @@ pub async fn users_follow_playlist(
 /// Maximum 50 ids. Requires `user-follow-modify`.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/).
-pub async fn follow_artists(
-    token: &AccessToken,
-    ids: &[&str],
-) -> Result<(), EndpointError<Error>> {
+pub async fn follow_artists(token: &AccessToken, ids: &[&str]) -> Result<(), EndpointError<Error>> {
+    if ids.is_empty() {
+        return Ok(());
+    }
+
     request!(token, PUT "/v1/me/following", query_params = {"type": "artist", "ids": &ids.join(",")}, body = "{}");
     Ok(())
 }
@@ -66,10 +79,11 @@ pub async fn follow_artists(
 /// Maximum 50 ids. Requires `user-follow-modify`.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/).
-pub async fn follow_users(
-    token: &AccessToken,
-    ids: &[&str],
-) -> Result<(), EndpointError<Error>> {
+pub async fn follow_users(token: &AccessToken, ids: &[&str]) -> Result<(), EndpointError<Error>> {
+    if ids.is_empty() {
+        return Ok(());
+    }
+
     request!(token, PUT "/v1/me/following", query_params = {"type": "user", "ids": &ids.join(",")}, body = "{}");
     Ok(())
 }
@@ -128,6 +142,10 @@ pub async fn unfollow_artists(
     token: &AccessToken,
     ids: &[&str],
 ) -> Result<(), EndpointError<Error>> {
+    if ids.is_empty() {
+        return Ok(());
+    }
+
     request!(token, DELETE "/v1/me/following", query_params = {"type": "artist", "ids": &ids.join(",")}, body = "{}");
     Ok(())
 }
@@ -137,10 +155,11 @@ pub async fn unfollow_artists(
 /// Maximum 50 ids. Requires `user-follow-modify`.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/).
-pub async fn unfollow_users(
-    token: &AccessToken,
-    ids: &[&str],
-) -> Result<(), EndpointError<Error>> {
+pub async fn unfollow_users(token: &AccessToken, ids: &[&str]) -> Result<(), EndpointError<Error>> {
+    if ids.is_empty() {
+        return Ok(());
+    }
+
     request!(token, DELETE "/v1/me/following", query_params = {"type": "user", "ids": &ids.join(",")}, body = "{}");
     Ok(())
 }
@@ -151,18 +170,15 @@ pub async fn unfollow_users(
 /// privately you need `playlist-modiy-private`.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-playlist/).
-pub async fn unfollow_playlist(
-    token: &AccessToken,
-    id: &str,
-) -> Result<(), EndpointError<Error>> {
+pub async fn unfollow_playlist(token: &AccessToken, id: &str) -> Result<(), EndpointError<Error>> {
     request!(token, DELETE "/v1/playlists/{}/followers", path_params = [id], body = "{}");
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
     use crate::endpoints::token;
+    use crate::*;
 
     #[tokio::test]
     async fn test_follow_artists() {
@@ -170,40 +186,69 @@ mod tests {
         // You also must not follow Lemon Demon.
         let token = token().await;
 
-        // Follow TOTO and Eminem
-        follow_artists(&token, &["0PFtn5NtBbbUNbU9EAmIWF", "7dGJo4pcD2V6oG8kP0tJRR"]).await.unwrap();
+        // TOTO, Eminem and Lemon Demon
+        let artists = &["0PFtn5NtBbbUNbU9EAmIWF", "7dGJo4pcD2V6oG8kP0tJRR", "4llAOeA6kEF4ytaB2fsmcW"];
+        let split = 2;
+        let (followed_artists, unfollowed_artists) = artists.split_at(split);
 
-        // Get followed artists
-        let following = get_followed_artists(&token, 50, None).await.unwrap().items;
-        assert!(following.iter().any(|artist| artist.name == "TOTO"));
-        assert!(following.iter().any(|artist| artist.name == "Eminem"));
+        // Store old
+        let old = user_follows_artists(&token, artists).await.unwrap();
 
-        // Check if you follow those artists
-        let follows = user_follows_artists(&token, &["0PFtn5NtBbbUNbU9EAmIWF", "4llAOeA6kEF4ytaB2fsmcW"]).await.unwrap();
-        assert_eq!(follows, &[true, false]);
+        // Following and unfollowing
+        follow_artists(&token, followed_artists).await.unwrap();
+        unfollow_artists(&token, unfollowed_artists).await.unwrap();
 
-        // Unfollow TOTO and Eminem
-        unfollow_artists(&token, &["0PFtn5NtBbbUNbU9EAmIWF", "7dGJo4pcD2V6oG8kP0tJRR"]).await.unwrap();
+        // Check
+        let check = user_follows_artists(&token, artists).await.unwrap();
+        let (follow_check, unfollow_check) = check.split_at(split);
+        assert!(follow_check.into_iter().all(|&followed| followed));
+        assert!(unfollow_check.into_iter().all(|&followed| !followed));
 
-        // Get followed artists
-        let following = get_followed_artists(&token, 50, None).await.unwrap().items;
-        assert!(following.iter().all(|artist| artist.name != "TOTO"));
-        assert!(following.iter().all(|artist| artist.name != "Eminem"));
+        // Check by finding in list
+        let followed = get_followed_artists(&token, 50, None).await.unwrap();
+        if followed.total <= 50 {
+            for followed_artist in followed_artists {
+                assert!(followed.items.iter().any(|artist| artist.id == *followed_artist));
+            }
+            for unfollowed_artist in unfollowed_artists {
+                assert!(followed.items.iter().all(|artist| artist.id != *unfollowed_artist));
+            }
+        }
+        
+        // Restore
+        let mut old_followed = Vec::with_capacity(artists.len());
+        let mut old_unfollowed = Vec::with_capacity(artists.len());
+        for i in 0..artists.len() {
+            if old[i] {
+                &mut old_followed
+            } else {
+                &mut old_unfollowed
+            }.push(artists[i]);
+        }
+        follow_artists(&token, &old_followed).await.unwrap();
+        unfollow_artists(&token, &old_unfollowed).await.unwrap();
     }
 
     #[tokio::test]
     async fn test_follow_playlists() {
+        // TODO: RESTORE old following state
         let token = token().await;
 
         // Follow "Sing-Along Indie Hits" playlist
-        follow_playlist_public(&token, "37i9dQZF1DWYBF1dYDPlHw").await.unwrap();
+        follow_playlist_public(&token, "37i9dQZF1DWYBF1dYDPlHw")
+            .await
+            .unwrap();
 
         // Check whether following playlist
         // TODO: Check whether current user follows this
-        let followers = users_follow_playlist(&token, "37i9dQZF1DWYBF1dYDPlHw", &["spotify"]).await.unwrap();
+        let followers = users_follow_playlist(&token, "37i9dQZF1DWYBF1dYDPlHw", &["spotify"])
+            .await
+            .unwrap();
         assert_eq!(followers, &[false]);
 
         // Unfollow
-        unfollow_playlist(&token, "37i9dQZF1DWYBF1dYDPlHw").await.unwrap();
+        unfollow_playlist(&token, "37i9dQZF1DWYBF1dYDPlHw")
+            .await
+            .unwrap();
     }
 }

@@ -10,7 +10,7 @@ authors = ["KaiJewson <58880148+KaiJewson@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-reqwest = { version = "0.10.0-alpha.2", features = ["json"] }
+reqwest = "0.10.0-alpha.2"
 tokio = "0.2.0-alpha.6"
 serde = { version = "1.0.104", features = ["derive"] }
 serde_millis = "0.1.1"
@@ -19,9 +19,7 @@ lazy_static = "1.4.0"
 isocountry = "0.2.0"
 isolanguage-1 = { version = "0.1.0", features = ["serde_support"] }
 rand = "0.7.2"
-
-# TEMPORARY, ONLY FOR DEBUGGING REMOVE AFTER U REMOVE THE #[cfg(test)] non-test PRINTS
-serde_json = "1.0.42"
+serde_json = "1.0.44"
 
 [dev-dependencies]
 dotenv = "0.15.0"

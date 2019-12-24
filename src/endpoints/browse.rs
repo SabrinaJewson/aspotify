@@ -51,7 +51,7 @@ pub async fn get_categories(
 }
 
 /// Get a category's playlists.
-/// 
+///
 /// Limit must be in the range [1..50].
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/browse/get-categorys-playlists/).
@@ -148,8 +148,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
     use crate::endpoints::token;
+    use crate::*;
     use chrono::DateTime;
     use isocountry::CountryCode;
     use isolanguage_1::LanguageCode;
