@@ -1,3 +1,5 @@
+//! Endpoint functions relating to albums.
+
 use crate::*;
 use serde::Deserialize;
 
@@ -9,9 +11,13 @@ pub async fn get_album(
     id: &str,
     market: Option<Market>,
 ) -> Result<Album, EndpointError<Error>> {
-    Ok(
-        request!(token, GET "/v1/albums/{}", path_params = [id], optional_query_params = {"market": market.map(|m| m.to_string())}, ret = Album),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/albums/{}",
+        path_params = [id],
+        optional_query_params = {"market": market.map(|m| m.as_str())},
+        ret = Album
+    ))
 }
 
 /// Get information about several albums.
@@ -33,7 +39,14 @@ pub async fn get_albums(
         albums: Vec<Album>,
     }
 
-    Ok(request!(token, GET "/v1/albums", query_params = {"ids": ids.join(",")}, optional_query_params = {"market": market.map(|m| m.to_string())}, ret = Albums).albums)
+    Ok(request!(
+        token,
+        GET "/v1/albums",
+        query_params = {"ids": ids.join(",")},
+        optional_query_params = {"market": market.map(|m| m.as_str())},
+        ret = Albums
+    )
+    .albums)
 }
 
 /// Get an album's tracks.
@@ -49,15 +62,20 @@ pub async fn get_album_tracks(
     offset: usize,
     market: Option<Market>,
 ) -> Result<Page<TrackSimplified>, EndpointError<Error>> {
-    Ok(
-        request!(token, GET "/v1/albums/{}/tracks", path_params = [id], query_params = {"limit": limit, "offset": offset}, optional_query_params = {"market": market.map(|m| m.to_string())}, ret = Page<TrackSimplified>),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/albums/{}/tracks",
+        path_params = [id],
+        query_params = {"limit": limit, "offset": offset},
+        optional_query_params = {"market": market.map(|m| m.as_str())},
+        ret = Page<TrackSimplified>
+    ))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
     use crate::endpoints::token;
+    use crate::*;
 
     #[tokio::test]
     async fn test_get_album() {

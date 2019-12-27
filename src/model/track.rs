@@ -78,40 +78,6 @@ pub struct TrackLink {
     pub id: String,
 }
 
-/// Information and analysis of a track.
-///
-/// See [the Spotify Web API
-/// reference](https://developer.spotify.com/documentation/web-api/reference/object-model/#audio-features-object)
-/// for more details on each on the items.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-pub struct AudioFeatures {
-    /// The [Spotify ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
-    /// for the track.
-    pub id: String,
-    /// The length of the track.
-    pub duraiton: Duration,
-    pub acousticness: f64,
-    pub danceability: f64,
-    pub energy: f64,
-    pub instrumentalness: f64,
-    pub key: u32,
-    pub liveness: f64,
-    pub loudness: f64,
-    pub mode: Mode,
-    pub speechiness: f64,
-    pub tempo: f64,
-    pub time_signature: u32,
-    pub valence: f64,
-}
-
-/// The mode of a song (major or minor).
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Mode {
-    Major,
-    Minor,
-}
-
 /// When and how a track was played.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct PlayHistory {

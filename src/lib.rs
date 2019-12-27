@@ -33,6 +33,10 @@ mod util;
 
 pub use authorization::*;
 pub use endpoints::*;
+/// Re-export from [isocountry](https://docs.rs/isocountry).
+pub use isocountry::CountryCode;
+/// Re-export from [isolanguage-1](https://docs.rs/isolanguage-1).
+pub use isolanguage_1::LanguageCode;
 pub use model::*;
 
 use lazy_static::lazy_static;

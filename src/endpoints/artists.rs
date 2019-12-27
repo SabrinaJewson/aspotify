@@ -1,12 +1,18 @@
+//! Endpoint functions relating to artists.
+
 use crate::*;
-use isocountry::CountryCode;
 use serde::Deserialize;
 
 /// Get information about an artist.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/artists/get-artist/).
 pub async fn get_artist(token: &AccessToken, id: &str) -> Result<Artist, EndpointError<Error>> {
-    Ok(request!(token, GET "/v1/artists/{}", path_params = [id], ret = Artist))
+    Ok(request!(
+        token,
+        GET "/v1/artists/{}",
+        path_params = [id],
+        ret = Artist
+    ))
 }
 
 /// Get information about several artists.
@@ -27,10 +33,13 @@ pub async fn get_artists(
         artists: Vec<Artist>,
     };
 
-    Ok(
-        request!(token, GET "/v1/artists", query_params = {"ids": ids.join(",")}, ret = Artists)
-            .artists,
+    Ok(request!(
+        token,
+        GET "/v1/artists",
+        query_params = {"ids": ids.join(",")},
+        ret = Artists
     )
+    .artists)
 }
 
 /// Get an artist's albums.
@@ -51,14 +60,16 @@ pub async fn get_artist_albums(
     offset: usize,
     country: Option<CountryCode>,
 ) -> Result<Page<ArtistsAlbum>, EndpointError<Error>> {
-    Ok(request!(token, GET "/v1/artists/{}/albums",
+    Ok(request!(
+        token,
+        GET "/v1/artists/{}/albums",
         path_params = [id],
         query_params = {"limit": limit.to_string(), "offset": offset.to_string()},
         optional_query_params = {
             "include_groups": include_groups.map(|groups|
                 groups
                     .iter()
-                    .map(AlbumGroup::to_string)
+                    .map(|&group| group.as_str())
                     .collect::<Vec<_>>()
                     .join(",")
             ),
@@ -83,7 +94,14 @@ pub async fn get_artist_top(
         tracks: Vec<Track>,
     };
 
-    Ok(request!(token, GET "/v1/artists/{}/top-tracks", path_params = [id], query_params = {"country": market.to_string()}, ret = Tracks).tracks)
+    Ok(request!(
+        token,
+        GET "/v1/artists/{}/top-tracks",
+        path_params = [id],
+        query_params = {"country": market.as_str()},
+        ret = Tracks
+    )
+    .tracks)
 }
 
 /// Get an artist's related artists.
@@ -100,17 +118,19 @@ pub async fn get_related_artists(
         artists: Vec<Artist>,
     };
 
-    Ok(
-        request!(token, GET "/v1/artists/{}/related-artists", path_params = [id], ret = Artists)
-            .artists,
+    Ok(request!(
+        token,
+        GET "/v1/artists/{}/related-artists",
+        path_params = [id],
+        ret = Artists
     )
+    .artists)
 }
 
 #[cfg(test)]
 mod tests {
     use crate::endpoints::token;
     use crate::*;
-    use isocountry::CountryCode;
 
     #[tokio::test]
     async fn test_get_artist() {

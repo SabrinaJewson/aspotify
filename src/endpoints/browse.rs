@@ -1,7 +1,8 @@
+//! Endpoint functions related to categories, featured playlists, recommendations, and new
+//! releases.
+
 use crate::*;
 use chrono::{DateTime, Utc};
-use isocountry::CountryCode;
-use isolanguage_1::LanguageCode;
 use serde::Deserialize;
 
 fn format_language(locale: (LanguageCode, CountryCode)) -> String {
@@ -20,9 +21,13 @@ pub async fn get_category(
     locale: Option<(LanguageCode, CountryCode)>,
     country: Option<CountryCode>,
 ) -> Result<Category, EndpointError<Error>> {
-    Ok(
-        request!(token, GET "/v1/browse/categories/{}", path_params = [name], optional_query_params = {"locale": locale.map(format_language), "country": country.map(|c| c.alpha2())}, ret = Category),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/browse/categories/{}",
+        path_params = [name],
+        optional_query_params = {"locale": locale.map(format_language), "country": country.map(|c| c.alpha2())},
+        ret = Category
+    ))
 }
 
 /// Get information about several categories.
@@ -43,7 +48,9 @@ pub async fn get_categories(
         categories: Page<Category>,
     };
 
-    Ok(request!(token, GET "/v1/browse/categories",
+    Ok(request!(
+        token,
+        GET "/v1/browse/categories",
         query_params = {"limit": limit.to_string(), "offset": offset.to_string()},
         optional_query_params = {"locale": locale.map(format_language), "country": country.map(|c| c.alpha2())},
         ret = CategoryPage
@@ -67,7 +74,9 @@ pub async fn get_category_playlists(
         playlists: Page<PlaylistSimplified>,
     };
 
-    Ok(request!(token, GET "/v1/browse/categories/{}/playlists",
+    Ok(request!(
+        token,
+        GET "/v1/browse/categories/{}/playlists",
         path_params = [name],
         query_params = {"limit": limit.to_string(), "offset": offset.to_string()},
         optional_query_params = {"country": country.map(|c| c.alpha2())},
@@ -90,7 +99,9 @@ pub async fn get_featured_playlists(
     time: Option<DateTime<Utc>>,
     country: Option<CountryCode>,
 ) -> Result<FeaturedPlaylists, EndpointError<Error>> {
-    Ok(request!(token, GET "/v1/browse/featured-playlists",
+    Ok(request!(
+        token,
+        GET "/v1/browse/featured-playlists",
         query_params = {"limit": limit.to_string(), "offset": offset.to_string()},
         optional_query_params = {"locale": locale.map(format_language), "timestamp": time.map(|t| t.to_rfc3339()), "country": country.map(|c| c.alpha2())},
         ret = FeaturedPlaylists
@@ -114,7 +125,14 @@ pub async fn get_new_releases(
         albums: Page<AlbumSimplified>,
     };
 
-    Ok(request!(token, GET "/v1/browse/new-releases", query_params = {"limit": limit.to_string(), "offset": offset.to_string()}, optional_query_params = {"country": country.map(|c| c.alpha2())}, ret = NewReleases).albums)
+    Ok(request!(
+        token,
+        GET "/v1/browse/new-releases",
+        query_params = {"limit": limit.to_string(), "offset": offset.to_string()},
+        optional_query_params = {"country": country.map(|c| c.alpha2())},
+        ret = NewReleases
+    )
+    .albums)
 }
 
 /// Get recommendations.
@@ -138,9 +156,11 @@ pub async fn get_recommendations<'iter, I>(
 where
     I: IntoIterator<Item = &'iter (&'iter str, &'iter str)>,
 {
-    Ok(request!(token, GET "/v1/recommendations",
+    Ok(request!(
+        token,
+        GET "/v1/recommendations",
         query_params = {"seed_artists": seed_artists.join(","), "seed_genres": seed_genres.join(","), "seed_tracks": seed_tracks.join(","), "limit": limit.to_string()},
-        optional_query_params = {"market": market.map(|m| m.to_string())},
+        optional_query_params = {"market": market.map(|m| m.as_str())},
         additional_query_params = attributes,
         ret = Recommendations
     ))
@@ -151,8 +171,6 @@ mod tests {
     use crate::endpoints::token;
     use crate::*;
     use chrono::DateTime;
-    use isocountry::CountryCode;
-    use isolanguage_1::LanguageCode;
 
     #[tokio::test]
     async fn test_get_category() {

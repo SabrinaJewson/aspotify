@@ -9,30 +9,25 @@ use lazy_static::lazy_static;
 use rand::Rng;
 use reqwest::Url;
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{self, Display, Formatter};
 use std::time::Instant;
 use std::{error, str};
 use tokio::sync::Mutex;
 
-// TODO: MAKE THIS BETTER LOL XD
-const STATE_LEN: usize = 12;
-const STATE_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~";
 lazy_static! {
-    static ref STATE: &'static str = {
-        let mut rng = rand::thread_rng();
+    static ref VALID_STATES: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
+}
+const STATE_LEN: usize = 16;
+const STATE_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~";
 
-        unsafe {
-            // Mutable static as this function is only called once
-            static mut STATE: [u8; STATE_LEN] = [0; STATE_LEN];
-            for c in STATE.iter_mut() {
-                *c = STATE_CHARS[rng.gen_range(0, STATE_CHARS.len())];
-            }
-
-            // String only contains ASCII, so it is always valid UTF-8.
-            str::from_utf8_unchecked(&STATE)
-        }
-    };
+fn random_state() -> String {
+    let mut rng = rand::thread_rng();
+    let mut state = String::with_capacity(STATE_LEN);
+    for _ in 0..STATE_LEN {
+        state.push(STATE_CHARS[rng.gen_range(0, STATE_CHARS.len())].into());
+    }
+    state
 }
 
 /// A scope that the user can grant access to.
@@ -60,9 +55,9 @@ pub enum Scope {
     UserFollowModify,
 }
 
-impl Display for Scope {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        f.write_str(match self {
+impl Scope {
+    pub fn as_str(self) -> &'static str {
+        match self {
             Self::UgcImageUpload => "ugc-image-upload",
             Self::UserReadPlaybackState => "user-read-playback-state",
             Self::UserModifyPlaybackState => "user-modify-playback-state",
@@ -81,7 +76,7 @@ impl Display for Scope {
             Self::UserReadRecentlyPlayed => "user-read-recently-played",
             Self::UserFollowRead => "user-follow-read",
             Self::UserFollowModify => "user-follow-modify",
-        })
+        }
     }
 }
 
@@ -92,24 +87,36 @@ impl Display for Scope {
 /// Make sure that you have whitelisted the redirect_uri in your Spotify dashboard, and
 /// `redirect_uri` must not contain any query strings.
 ///
+/// This method automatically sets the state parameter parameter which
+/// [`AuthCodeFlow::from_redirect`](struct.AuthCodeFlow.html#method.from_redirect) then checks,
+/// ensuring that fake redirect requests cannnot be done.
+///
 /// [Reference](https://developer.spotify.com/documentation/general/guides/authorization-guide/#1-have-your-application-request-authorization-the-user-logs-in-and-authorizes-access).
-pub fn get_authorization_url(
+pub async fn get_authorization_url(
     client_id: &str,
     scopes: &[Scope],
     force_approve: bool,
     redirect_uri: &str,
 ) -> String {
-    Url::parse_with_params(
+    let mut valid_states = VALID_STATES.lock().await;
+    let state = loop {
+        let state = random_state();
+        if !valid_states.contains(&state) {
+            break state;
+        }
+    };
+
+    let url = Url::parse_with_params(
         "https://accounts.spotify.com/authorize",
         &[
             ("response_type", "code"),
-            ("state", *STATE),
+            ("state", &state),
             ("client_id", client_id),
             (
                 "scope",
                 &scopes
                     .iter()
-                    .map(Scope::to_string)
+                    .map(|&scope| scope.as_str())
                     .collect::<Vec<_>>()
                     .join(" "),
             ),
@@ -118,7 +125,10 @@ pub fn get_authorization_url(
         ],
     )
     .unwrap()
-    .into_string()
+    .into_string();
+
+    valid_states.insert(state);
+    url
 }
 
 /// An object that holds your client credentials, and caches access tokens with the Authorization
@@ -135,7 +145,7 @@ pub fn get_authorization_url(
 ///
 /// // Get the URL to send the user to, requesting no scopes and redirecting to a non-existant
 /// // website (make sure that the non-existant website is whitelisted on the Spotify dashboard).
-/// let url = aspotify::get_authorization_url(&credentials.id, &[], false, "http://non.existant/");
+/// let url = aspotify::get_authorization_url(&credentials.id, &[], false, "http://non.existant/").await;
 ///
 /// // Get the user to authorize our application.
 /// println!("Go to this website: {}", url);
@@ -170,11 +180,11 @@ impl AuthCodeFlow {
         let url = Url::parse(redirected_to).map_err(|_| FromRedirectError::InvalidRedirect)?;
 
         let pairs: HashMap<_, _> = url.query_pairs().collect();
-        if pairs
-            .get("state")
-            .ok_or(FromRedirectError::InvalidRedirect)?
-            != *STATE
-        {
+        if !VALID_STATES.lock().await.remove(
+            &pairs
+                .get("state")
+                .ok_or(FromRedirectError::InvalidRedirect)?[..],
+        ) {
             return Err(FromRedirectError::InvalidRedirect);
         }
         if let Some(error) = pairs.get("error") {

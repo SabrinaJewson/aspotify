@@ -1,8 +1,8 @@
 use crate::model::*;
 use reqwest::StatusCode;
 use serde::Deserialize;
-use std::error;
 use std::fmt::{self, Display, Formatter};
+use std::{error, io};
 
 /// An error caused by a Spotify endpoint.
 pub trait SpotifyError: error::Error {}
@@ -110,6 +110,7 @@ pub enum EndpointError<E: SpotifyError> {
     HttpError(reqwest::Error),
     ParseError(serde_json::error::Error),
     SpotifyError(E),
+    IoError(io::Error),
 }
 
 impl<E: SpotifyError> Display for EndpointError<E> {
@@ -118,6 +119,7 @@ impl<E: SpotifyError> Display for EndpointError<E> {
             Self::HttpError(e) => write!(f, "{}", e),
             Self::ParseError(e) => write!(f, "{}", e),
             Self::SpotifyError(e) => write!(f, "{}", e),
+            Self::IoError(e) => write!(f, "{}", e),
         }
     }
 }
@@ -127,6 +129,7 @@ impl<E: SpotifyError> error::Error for EndpointError<E> {
         match self {
             Self::HttpError(e) => Some(e),
             Self::ParseError(e) => Some(e),
+            Self::IoError(e) => Some(e),
             _ => None,
         }
     }
@@ -147,6 +150,12 @@ impl<E: SpotifyError> From<serde_json::error::Error> for EndpointError<E> {
 impl<E: SpotifyError> From<E> for EndpointError<E> {
     fn from(error: E) -> Self {
         Self::SpotifyError(error)
+    }
+}
+
+impl<E: SpotifyError> From<io::Error> for EndpointError<E> {
+    fn from(error: io::Error) -> Self {
+        Self::IoError(error)
     }
 }
 

@@ -35,7 +35,8 @@ async fn main() {
         ],
         false,
         "http://non.existant/",
-    );
+    )
+    .await;
 
     // Get the user to authorize our application.
     println!("Go to this website: {}", url);

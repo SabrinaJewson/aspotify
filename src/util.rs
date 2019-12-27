@@ -1,14 +1,15 @@
 // Useful deserialization functions
 
 use crate::*;
+use chrono::NaiveDate;
 use reqwest::StatusCode;
+use serde::de::{self, Deserializer, MapAccess, Unexpected, Visitor};
 use serde::Deserialize;
-use serde::de::{self, Deserializer, Visitor, MapAccess};
 use std::convert::TryInto;
 use std::fmt::{self, Formatter};
 use std::time::{Duration, Instant};
 
-pub(crate) fn from_seconds<'de, D>(deserializer: D) -> Result<Instant, D::Error>
+pub(crate) fn instant_from_seconds<'de, D>(deserializer: D) -> Result<Instant, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -25,6 +26,25 @@ where
     }
 
     deserializer.deserialize_u64(Expires)
+}
+
+pub(crate) fn duration_from_secs<'de, D>(deserializer: D) -> Result<Duration, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct Secs;
+
+    impl<'de> Visitor<'de> for Secs {
+        type Value = Duration;
+        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+            write!(f, "seconds")
+        }
+        fn visit_f64<E: de::Error>(self, v: f64) -> Result<Self::Value, E> {
+            Ok(Duration::from_secs_f64(v))
+        }
+    }
+
+    deserializer.deserialize_f64(Secs)
 }
 
 pub(crate) fn duration_from_millis<'de, D>(deserializer: D) -> Result<Duration, D::Error>
@@ -46,7 +66,9 @@ where
     deserializer.deserialize_u64(Millis)
 }
 
-pub(crate) fn duration_from_millis_option<'de, D>(deserializer: D) -> Result<Option<Duration>, D::Error>
+pub(crate) fn duration_from_millis_option<'de, D>(
+    deserializer: D,
+) -> Result<Option<Duration>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -135,4 +157,36 @@ where
     }
 
     deserializer.deserialize_str(UriVisitor)
+}
+
+pub(crate) fn from_arbitrary_date_precision<'de, D>(deserializer: D) -> Result<NaiveDate, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct DateVisitor;
+
+    impl<'de> Visitor<'de> for DateVisitor {
+        type Value = NaiveDate;
+        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+            write!(f, "a date")
+        }
+        fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
+            let mut parts = v.splitn(3, '-');
+
+            let year: i32 = parts.next().unwrap().parse().map_err(E::custom)?;
+            let month: u32 = match parts.next() {
+                Some(val) => val.parse().map_err(E::custom)?,
+                None => 1,
+            };
+            let day: u32 = match parts.next() {
+                Some(val) => val.parse().map_err(E::custom)?,
+                None => 1,
+            };
+
+            Ok(NaiveDate::from_ymd_opt(year, month, day)
+                .ok_or_else(|| E::invalid_value(Unexpected::Str(v), &self))?)
+        }
+    }
+
+    deserializer.deserialize_str(DateVisitor)
 }

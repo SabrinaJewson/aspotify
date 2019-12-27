@@ -1,5 +1,4 @@
 use crate::model::*;
-use std::fmt::{self, Display, Formatter};
 
 macro_rules! inherit_album_simplified {
     ($(#[$attr:meta])* $name:ident { $($(#[$f_attr:meta])* $f_name:ident : $f_ty:ty,)* }) => {
@@ -25,6 +24,7 @@ macro_rules! inherit_album_simplified {
             /// The name of the album; if the album has been taken down, this is an empty string.
             name: String,
             /// When the album was released.
+            #[serde(deserialize_with = "from_arbitrary_date_precision")]
             release_date: NaiveDate,
             /// How precise the release date is: precise to the year, month or day.
             release_date_precision: DatePrecision,
@@ -92,14 +92,14 @@ pub enum AlbumGroup {
     AppearsOn,
 }
 
-impl Display for AlbumGroup {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
+impl AlbumGroup {
+    pub fn as_str(self) -> &'static str {
+        match self {
             AlbumGroup::Album => "album",
             AlbumGroup::Single => "single",
             AlbumGroup::Compilation => "compilation",
             AlbumGroup::AppearsOn => "appears_on",
-        })
+        }
     }
 }
 

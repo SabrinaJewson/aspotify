@@ -27,15 +27,16 @@ macro_rules! inherit_playlist_simplified {
             public: Option<bool>,
             /// The version identifier of the playlist.
             snapshot_id: String,
-            /// The number of tracks in the playlist.
-            tracks: Tracks,
         });
     }
 }
 
 inherit_playlist_simplified!(
     /// A simplified playlist object.
-    PlaylistSimplified {}
+    PlaylistSimplified {
+        /// The number of tracks in the playlist.
+        tracks: Tracks,
+    }
 );
 inherit_playlist_simplified!(
     /// A playlist object.
@@ -45,8 +46,7 @@ inherit_playlist_simplified!(
         /// The followers of the playlist.
         followers: Followers,
         /// Information about the tracks of the playlist.
-        #[serde(rename = "tracks")]
-        track_info: Page<PlaylistTrack>,
+        tracks: Page<PlaylistTrack>,
     }
 );
 
@@ -55,8 +55,9 @@ inherit_playlist_simplified!(
 pub struct PlaylistTrack {
     /// The date and time that the track was added. Some very old playlists might have None.
     pub added_at: Option<DateTime<Utc>>,
-    /// The Spotify user who added the track. Some very old playlists might have None.
-    pub added_by: Option<UserPublic>,
+    /// The Spotify user who added the track. Some very old playlists might have None. This is a
+    /// UserPublic according to the documentation, but in practice it is not.
+    pub added_by: Option<UserSimplified>,
     /// Whether the track is a local file or not.
     pub is_local: bool,
     /// Information about the track.
