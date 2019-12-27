@@ -66,7 +66,7 @@ impl ClientCredentials {
 pub struct AccessToken {
     #[serde(rename = "access_token")]
     pub token: String,
-    #[serde(rename = "expires_in", deserialize_with = "from_seconds")]
+    #[serde(rename = "expires_in", deserialize_with = "instant_from_seconds")]
     pub expires: Instant,
 }
 

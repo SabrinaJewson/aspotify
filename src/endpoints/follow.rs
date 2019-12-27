@@ -1,9 +1,11 @@
+//! Endpoint functions relating to following and unfollowing artists, users and playlists.
+
 use crate::*;
 use serde::Deserialize;
 
 /// Check if the current user follows some artists.
 ///
-/// Returns vector of bools that is in the same order as the given ids. Maximum 50 IDs. Requires
+/// Returns vector of bools that is in the same order as the given ids. Maximum 50 ids. Requires
 /// `user-follow-read`.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-current-user-follows/).
@@ -15,14 +17,17 @@ pub async fn user_follows_artists(
         return Ok(Vec::new());
     }
 
-    Ok(
-        request!(token, GET "/v1/me/following/contains", query_params = {"type": "artist", "ids": &&ids.join(",")}, ret = Vec<bool>),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/me/following/contains",
+        query_params = {"type": "artist", "ids": &&ids.join(",")},
+        ret = Vec<bool>
+    ))
 }
 
 /// Check if the current user follows some users.
 ///
-/// Return vector of bools that is in the same order as the given ids. Maximum 50 IDs. Requires
+/// Return vector of bools that is in the same order as the given ids. Maximum 50 ids. Requires
 /// `user-follow-read`.
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-current-user-follows/).
@@ -34,9 +39,12 @@ pub async fn user_follows_users(
         return Ok(Vec::new());
     }
 
-    Ok(
-        request!(token, GET "/v1/me/following/contains", query_params = {"type": "user", "ids": &&ids.join(",")}, ret = Vec<bool>),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/me/following/contains",
+        query_params = {"type": "user", "ids": &&ids.join(",")},
+        ret = Vec<bool>
+    ))
 }
 
 /// Check if some users follow a playlist.
@@ -55,9 +63,13 @@ pub async fn users_follow_playlist(
         return Ok(Vec::new());
     }
 
-    Ok(
-        request!(token, GET "/v1/playlists/{}/followers/contains", path_params = [id], query_params = {"ids": &&user_ids.join(",")}, ret = Vec<bool>),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/playlists/{}/followers/contains",
+        path_params = [id],
+        query_params = {"ids": &&user_ids.join(",")},
+        ret = Vec<bool>
+    ))
 }
 
 /// Follow artists.
@@ -70,7 +82,12 @@ pub async fn follow_artists(token: &AccessToken, ids: &[&str]) -> Result<(), End
         return Ok(());
     }
 
-    request!(token, PUT "/v1/me/following", query_params = {"type": "artist", "ids": &ids.join(",")}, body = "{}");
+    request!(
+        token,
+        PUT "/v1/me/following",
+        query_params = {"type": "artist", "ids": &ids.join(",")},
+        body = "{}"
+    );
     Ok(())
 }
 
@@ -84,7 +101,12 @@ pub async fn follow_users(token: &AccessToken, ids: &[&str]) -> Result<(), Endpo
         return Ok(());
     }
 
-    request!(token, PUT "/v1/me/following", query_params = {"type": "user", "ids": &ids.join(",")}, body = "{}");
+    request!(
+        token,
+        PUT "/v1/me/following",
+        query_params = {"type": "user", "ids": &ids.join(",")},
+        body = "{}"
+    );
     Ok(())
 }
 
@@ -97,7 +119,13 @@ pub async fn follow_playlist_public(
     token: &AccessToken,
     id: &str,
 ) -> Result<(), EndpointError<Error>> {
-    request!(token, PUT "/v1/playlists/{}/followers", path_params = [id], header_params = {"Content-Type": "application/json"}, body = "{\"public\": true}");
+    request!(
+        token,
+        PUT "/v1/playlists/{}/followers",
+        path_params = [id],
+        header_params = {"Content-Type": "application/json"},
+        body = "{\"public\": true}"
+    );
     Ok(())
 }
 
@@ -110,7 +138,13 @@ pub async fn follow_playlist_private(
     token: &AccessToken,
     id: &str,
 ) -> Result<(), EndpointError<Error>> {
-    request!(token, PUT "/v1/playlists/{}/followers", path_params = [id], header_params = {"Content-Type": "application/json"}, body = "{\"public\": false}");
+    request!(
+        token,
+        PUT "/v1/playlists/{}/followers",
+        path_params = [id],
+        header_params = {"Content-Type": "application/json"},
+        body = "{\"public\": false}"
+    );
     Ok(())
 }
 
@@ -130,7 +164,14 @@ pub async fn get_followed_artists(
         artists: CursorPage<Artist>,
     };
 
-    Ok(request!(token, GET "/v1/me/following", query_params = {"type": "artist", "limit": &limit.to_string()}, optional_query_params = {"after": after}, ret = Response).artists)
+    Ok(request!(
+        token,
+        GET "/v1/me/following",
+        query_params = {"type": "artist", "limit": &limit.to_string()},
+        optional_query_params = {"after": after},
+        ret = Response
+    )
+    .artists)
 }
 
 /// Unfollow artists.
@@ -146,7 +187,12 @@ pub async fn unfollow_artists(
         return Ok(());
     }
 
-    request!(token, DELETE "/v1/me/following", query_params = {"type": "artist", "ids": &ids.join(",")}, body = "{}");
+    request!(
+        token,
+        DELETE "/v1/me/following",
+        query_params = {"type": "artist", "ids": &ids.join(",")},
+        body = "{}"
+    );
     Ok(())
 }
 
@@ -160,7 +206,12 @@ pub async fn unfollow_users(token: &AccessToken, ids: &[&str]) -> Result<(), End
         return Ok(());
     }
 
-    request!(token, DELETE "/v1/me/following", query_params = {"type": "user", "ids": &ids.join(",")}, body = "{}");
+    request!(
+        token,
+        DELETE "/v1/me/following",
+        query_params = {"type": "user", "ids": &ids.join(",")},
+        body = "{}"
+    );
     Ok(())
 }
 
@@ -171,7 +222,12 @@ pub async fn unfollow_users(token: &AccessToken, ids: &[&str]) -> Result<(), End
 ///
 /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-playlist/).
 pub async fn unfollow_playlist(token: &AccessToken, id: &str) -> Result<(), EndpointError<Error>> {
-    request!(token, DELETE "/v1/playlists/{}/followers", path_params = [id], body = "{}");
+    request!(
+        token,
+        DELETE "/v1/playlists/{}/followers",
+        path_params = [id],
+        body = "{}"
+    );
     Ok(())
 }
 
@@ -187,7 +243,11 @@ mod tests {
         let token = token().await;
 
         // TOTO, Eminem and Lemon Demon
-        let artists = &["0PFtn5NtBbbUNbU9EAmIWF", "7dGJo4pcD2V6oG8kP0tJRR", "4llAOeA6kEF4ytaB2fsmcW"];
+        let artists = &[
+            "0PFtn5NtBbbUNbU9EAmIWF",
+            "7dGJo4pcD2V6oG8kP0tJRR",
+            "4llAOeA6kEF4ytaB2fsmcW",
+        ];
         let split = 2;
         let (followed_artists, unfollowed_artists) = artists.split_at(split);
 
@@ -208,13 +268,19 @@ mod tests {
         let followed = get_followed_artists(&token, 50, None).await.unwrap();
         if followed.total <= 50 {
             for followed_artist in followed_artists {
-                assert!(followed.items.iter().any(|artist| artist.id == *followed_artist));
+                assert!(followed
+                    .items
+                    .iter()
+                    .any(|artist| artist.id == *followed_artist));
             }
             for unfollowed_artist in unfollowed_artists {
-                assert!(followed.items.iter().all(|artist| artist.id != *unfollowed_artist));
+                assert!(followed
+                    .items
+                    .iter()
+                    .all(|artist| artist.id != *unfollowed_artist));
             }
         }
-        
+
         // Restore
         let mut old_followed = Vec::with_capacity(artists.len());
         let mut old_unfollowed = Vec::with_capacity(artists.len());
@@ -223,7 +289,8 @@ mod tests {
                 &mut old_followed
             } else {
                 &mut old_unfollowed
-            }.push(artists[i]);
+            }
+            .push(artists[i]);
         }
         follow_artists(&token, &old_followed).await.unwrap();
         unfollow_artists(&token, &old_unfollowed).await.unwrap();
@@ -231,7 +298,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_follow_playlists() {
-        // TODO: RESTORE old following state
         let token = token().await;
 
         // Follow "Sing-Along Indie Hits" playlist
@@ -240,11 +306,11 @@ mod tests {
             .unwrap();
 
         // Check whether following playlist
-        // TODO: Check whether current user follows this
-        let followers = users_follow_playlist(&token, "37i9dQZF1DWYBF1dYDPlHw", &["spotify"])
+        let id = get_current_user(&token).await.unwrap().id;
+        let followers = users_follow_playlist(&token, "37i9dQZF1DWYBF1dYDPlHw", &["spotify", &id])
             .await
             .unwrap();
-        assert_eq!(followers, &[false]);
+        assert_eq!(followers, &[false, true]);
 
         // Unfollow
         unfollow_playlist(&token, "37i9dQZF1DWYBF1dYDPlHw")

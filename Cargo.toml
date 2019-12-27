@@ -20,6 +20,7 @@ isocountry = "0.2.0"
 isolanguage-1 = { version = "0.1.0", features = ["serde_support"] }
 rand = "0.7.2"
 serde_json = "1.0.44"
+base64 = "0.11.0"
 
 [dev-dependencies]
 dotenv = "0.15.0"

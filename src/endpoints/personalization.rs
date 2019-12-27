@@ -1,3 +1,5 @@
+//! Endpoint functions relating to a user's top artists and tracks.
+
 use crate::*;
 
 /// Get a user's top artists.
@@ -11,9 +13,12 @@ pub async fn get_top_artists(
     offset: usize,
     time_range: TimeRange,
 ) -> Result<Page<Artist>, EndpointError<Error>> {
-    Ok(
-        request!(token, GET "/v1/me/top/artists", query_params = {"limit": limit.to_string(), "offset": offset.to_string(), "time_range": time_range.to_string()}, ret = Page<Artist>),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/me/top/artists",
+        query_params = {"limit": &limit.to_string()[..], "offset": &offset.to_string()[..], "time_range": time_range.as_str()},
+        ret = Page<Artist>
+    ))
 }
 
 /// Get a user's top tracks.
@@ -27,9 +32,12 @@ pub async fn get_top_tracks(
     offset: usize,
     time_range: TimeRange,
 ) -> Result<Page<Track>, EndpointError<Error>> {
-    Ok(
-        request!(token, GET "/v1/me/top/tracks", query_params = {"limit": limit.to_string(), "offset": offset.to_string(), "time_range": time_range.to_string()}, ret = Page<Track>),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/me/top/tracks",
+        query_params = {"limit": &limit.to_string()[..], "offset": &offset.to_string()[..], "time_range": time_range.as_str()},
+        ret = Page<Track>
+    ))
 }
 
 #[cfg(test)]

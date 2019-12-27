@@ -1,3 +1,5 @@
+//! Endpoints relating to saving albums and tracks.
+
 use crate::*;
 
 /// Check if the current user has saved some albums.
@@ -13,9 +15,12 @@ pub async fn user_saved_albums(
     if ids.is_empty() {
         return Ok(Vec::new());
     }
-    Ok(
-        request!(token, GET "/v1/me/albums/contains", query_params = {"ids": ids.join(",")}, ret = Vec<bool>),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/me/albums/contains",
+        query_params = {"ids": ids.join(",")},
+        ret = Vec<bool>
+    ))
 }
 
 /// Check if the current user has saved some tracks.
@@ -31,9 +36,12 @@ pub async fn user_saved_tracks(
     if ids.is_empty() {
         return Ok(Vec::new());
     }
-    Ok(
-        request!(token, GET "/v1/me/tracks/contains", query_params = {"ids": ids.join(",")}, ret = Vec<bool>),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/me/tracks/contains",
+        query_params = {"ids": ids.join(",")},
+        ret = Vec<bool>
+    ))
 }
 
 /// Get the current user's saved albums.
@@ -47,9 +55,13 @@ pub async fn get_saved_albums(
     offset: usize,
     market: Option<Market>,
 ) -> Result<Page<SavedAlbum>, EndpointError<Error>> {
-    Ok(
-        request!(token, GET "/v1/me/albums", query_params = {"limit": limit.to_string(), "offset": offset.to_string()}, optional_query_params = {"market": market.map(|m| m.to_string())}, ret = Page<SavedAlbum>),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/me/albums",
+        query_params = {"limit": limit.to_string(), "offset": offset.to_string()},
+        optional_query_params = {"market": market.map(|m| m.as_str())},
+        ret = Page<SavedAlbum>
+    ))
 }
 
 /// Get the current user's saved tracks.
@@ -63,9 +75,13 @@ pub async fn get_saved_tracks(
     offset: usize,
     market: Option<Market>,
 ) -> Result<Page<SavedTrack>, EndpointError<Error>> {
-    Ok(
-        request!(token, GET "/v1/me/tracks", query_params = {"limit": limit.to_string(), "offset": offset.to_string()}, optional_query_params = {"market": market.map(|m| m.to_string())}, ret = Page<SavedTrack>),
-    )
+    Ok(request!(
+        token,
+        GET "/v1/me/tracks",
+        query_params = {"limit": limit.to_string(), "offset": offset.to_string()},
+        optional_query_params = {"market": market.map(|m| m.as_str())},
+        ret = Page<SavedTrack>
+    ))
 }
 
 /// Unsave some of the current user's saved albums.
@@ -77,7 +93,12 @@ pub async fn unsave_albums(token: &AccessToken, ids: &[&str]) -> Result<(), Endp
     if ids.is_empty() {
         return Ok(());
     }
-    request!(token, DELETE "/v1/me/albums", query_params = {"ids": ids.join(",")}, body = "{}");
+    request!(
+        token,
+        DELETE "/v1/me/albums",
+        query_params = {"ids": ids.join(",")},
+        body = "{}"
+    );
     Ok(())
 }
 
@@ -90,7 +111,12 @@ pub async fn unsave_tracks(token: &AccessToken, ids: &[&str]) -> Result<(), Endp
     if ids.is_empty() {
         return Ok(());
     }
-    request!(token, DELETE "/v1/me/tracks", query_params = {"ids": ids.join(",")}, body = "{}");
+    request!(
+        token,
+        DELETE "/v1/me/tracks",
+        query_params = {"ids": ids.join(",")},
+        body = "{}"
+    );
     Ok(())
 }
 
@@ -103,7 +129,12 @@ pub async fn save_albums(token: &AccessToken, ids: &[&str]) -> Result<(), Endpoi
     if ids.is_empty() {
         return Ok(());
     }
-    request!(token, PUT "/v1/me/albums", query_params = {"ids": ids.join(",")}, body = "{}");
+    request!(
+        token,
+        PUT "/v1/me/albums",
+        query_params = {"ids": ids.join(",")},
+        body = "{}"
+    );
     Ok(())
 }
 
@@ -116,7 +147,12 @@ pub async fn save_tracks(token: &AccessToken, ids: &[&str]) -> Result<(), Endpoi
     if ids.is_empty() {
         return Ok(());
     }
-    request!(token, PUT "/v1/me/tracks", query_params = {"ids": ids.join(",")}, body = "{}");
+    request!(
+        token,
+        PUT "/v1/me/tracks",
+        query_params = {"ids": ids.join(",")},
+        body = "{}"
+    );
     Ok(())
 }
 
@@ -130,7 +166,11 @@ mod tests {
         let token = token().await;
 
         // "Wish", "The Black Parade", and "Spirit Phone"
-        let albums = &["0aEL0zQ4XLuxQP0j7sLlS1", "0FZK97MXMm5mUQ8mtudjuK", "4ocal2JegUDVQdP6KN1roI"];
+        let albums = &[
+            "0aEL0zQ4XLuxQP0j7sLlS1",
+            "0FZK97MXMm5mUQ8mtudjuK",
+            "4ocal2JegUDVQdP6KN1roI",
+        ];
         let split = 2;
         let (saved_albums, unsaved_albums) = albums.split_at(split);
 
@@ -151,10 +191,16 @@ mod tests {
         let saved = get_saved_albums(&token, 50, 0, None).await.unwrap();
         if saved.total <= 50 {
             for saved_album in saved_albums {
-                assert!(saved.items.iter().any(|album| album.album.id == *saved_album));
+                assert!(saved
+                    .items
+                    .iter()
+                    .any(|album| album.album.id == *saved_album));
             }
             for unsaved_album in unsaved_albums {
-                assert!(saved.items.iter().all(|album| album.album.id != *unsaved_album));
+                assert!(saved
+                    .items
+                    .iter()
+                    .all(|album| album.album.id != *unsaved_album));
             }
         }
 
@@ -166,7 +212,8 @@ mod tests {
                 &mut old_saved
             } else {
                 &mut old_unsaved
-            }.push(albums[i]);
+            }
+            .push(albums[i]);
         }
         save_albums(&token, &old_saved).await.unwrap();
         unsave_albums(&token, &old_unsaved).await.unwrap();
@@ -198,10 +245,16 @@ mod tests {
         let saved = get_saved_tracks(&token, 50, 0, None).await.unwrap();
         if saved.total <= 50 {
             for saved_track in saved_tracks {
-                assert!(saved.items.iter().any(|track| track.track.id == *saved_track));
+                assert!(saved
+                    .items
+                    .iter()
+                    .any(|track| track.track.id == *saved_track));
             }
             for unsaved_track in unsaved_tracks {
-                assert!(saved.items.iter().all(|track| track.track.id != *unsaved_track));
+                assert!(saved
+                    .items
+                    .iter()
+                    .all(|track| track.track.id != *unsaved_track));
             }
         }
 
@@ -213,7 +266,8 @@ mod tests {
                 &mut old_saved
             } else {
                 &mut old_unsaved
-            }.push(tracks[i]);
+            }
+            .push(tracks[i]);
         }
         save_tracks(&token, &old_saved).await.unwrap();
         unsave_tracks(&token, &old_unsaved).await.unwrap();

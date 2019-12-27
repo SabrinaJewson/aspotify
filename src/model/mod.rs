@@ -3,6 +3,7 @@
 //! deserializable Rust structures.
 
 pub use album::*;
+pub use analysis::*;
 pub use artist::*;
 pub use device::*;
 pub use errors::*;
@@ -35,6 +36,7 @@ macro_rules! to_struct {
 }
 
 mod album;
+mod analysis;
 mod artist;
 mod device;
 mod errors;
@@ -204,4 +206,34 @@ pub enum DatePrecision {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Restrictions {
     pub reason: String,
+}
+
+/// A type of item in the Spotify model.
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ItemType {
+    Album,
+    Artist,
+    Playlist,
+    Track,
+}
+
+impl ItemType {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Album => "album",
+            Self::Artist => "artist",
+            Self::Playlist => "playlist",
+            Self::Track => "track",
+        }
+    }
+}
+
+/// The results of a search.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct SearchResults {
+    pub artists: Option<Page<Artist>>,
+    pub albums: Option<Page<AlbumSimplified>>,
+    pub tracks: Option<Page<Track>>,
+    pub playlists: Option<Page<PlaylistSimplified>>,
 }

@@ -1,7 +1,6 @@
 use crate::model::*;
 // See line 50
 //use chrono::serde::ts_milliseconds;
-use std::fmt::{self, Display, Formatter};
 
 /// A device object.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -54,7 +53,10 @@ pub struct CurrentlyPlaying {
     // pub timestamp: DateTime<Utc>,
     /// Progress into the currently playing track. Is None for example if a private session is
     /// enabled.
-    #[serde(rename = "progress_ms", deserialize_with = "duration_from_millis_option")]
+    #[serde(
+        rename = "progress_ms",
+        deserialize_with = "duration_from_millis_option"
+    )]
     pub progress: Option<Duration>,
     /// If something is currently playing.
     pub is_playing: bool,
@@ -116,9 +118,9 @@ pub enum TrackType {
 /// The context of the current playing track.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Context {
-    /// The type of context; album, artist, playlist.
+    /// The type of context; album, artist, playlist, track.
     #[serde(rename = "type")]
-    pub context_type: ContextType,
+    pub context_type: ItemType,
     /// External URLs for this context.
     pub external_urls: HashMap<String, String>,
     /// The [Spotify
@@ -126,25 +128,6 @@ pub struct Context {
     /// for the context.
     #[serde(rename = "uri", deserialize_with = "uri_to_id")]
     pub id: String,
-}
-
-/// A type of object in the Spotify model.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ContextType {
-    Album,
-    Artist,
-    Playlist,
-}
-
-impl Display for ContextType {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        f.write_str(match self {
-            Self::Album => "album",
-            Self::Artist => "artist",
-            Self::Playlist => "playlist",
-        })
-    }
 }
 
 /// Repeating the track, the context or not at all.
@@ -156,15 +139,15 @@ pub enum RepeatState {
     /// Repeating the current track.
     Track,
     /// Repeating the current context (e.g. playlist, album, etc).
-    Context
+    Context,
 }
 
-impl Display for RepeatState {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        f.write_str(match self {
+impl RepeatState {
+    pub fn as_str(self) -> &'static str {
+        match self {
             Self::Off => "off",
             Self::Track => "track",
             Self::Context => "context",
-        })
+        }
     }
 }
