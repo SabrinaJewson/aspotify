@@ -1,7 +1,5 @@
 //! Endpoint functions to the Spotify API.
 //!
-//! Functions labelled (Beta) use Beta Spotify endpoints, and so are more likely to break.
-//!
 //! # Common Parameters
 //!
 //! | Parameter | Use |
@@ -71,7 +69,7 @@ macro_rules! request {
             // 2 seconds is default retry after time; should never be used if the Spotify API and
             // my code are both correct.
             let wait = wait.unwrap_or(2);
-            tokio::timer::delay_for(std::time::Duration::from_secs(wait)).await;
+            tokio::time::delay_for(std::time::Duration::from_secs(wait)).await;
         };
         let status = response.status();
         let text = response.text().await?;

@@ -1,4 +1,6 @@
-//! Endpoint functions related to controlling what is playing on the current user's Spotify account.
+//! Endpoint functions related to controlling what is playing on the current user's Spotify account. (Beta)
+//!
+//! All endpoints in here are in Beta, and so are more likely to break.
 //!
 //! The `device_id` parameter seen in this module is the device to perform the request on. If not
 //! specified, it will default to the current user's currenttly active device.
@@ -330,7 +332,7 @@ mod tests {
     use crate::endpoints::token;
     use crate::*;
     use std::time::Duration;
-    use tokio::timer;
+    use tokio::time;
 
     #[tokio::test]
     async fn test() {
@@ -354,7 +356,7 @@ mod tests {
         // Time to wait to assume that the operation has completed
         let wait_time = Duration::from_millis(300);
 
-        // Play 10 seconds into the 3rd song from RELAXER
+        // Play 10 seconds into the 3rd track from RELAXER
         play(
             &token,
             Some(Play::Context(ItemType::Album, "3lBPyXvg1hhoJ1REnw80fZ", 2)),
@@ -363,7 +365,7 @@ mod tests {
         )
         .await
         .unwrap();
-        timer::delay_for(wait_time).await;
+        time::delay_for(wait_time).await;
         let playback = get_playback(&token, Some(Market::FromToken))
             .await
             .unwrap()
@@ -397,7 +399,7 @@ mod tests {
         )
         .await
         .unwrap();
-        timer::delay_for(wait_time).await;
+        time::delay_for(wait_time).await;
         let playing = get_playing_track(&token, Some(Market::FromToken))
             .await
             .unwrap()
@@ -412,7 +414,7 @@ mod tests {
         seek(&token, Duration::from_millis(152106 - 2), None)
             .await
             .unwrap();
-        timer::delay_for(wait_time).await;
+        time::delay_for(wait_time).await;
         let playing = get_playing_track(&token, Some(Market::FromToken))
             .await
             .unwrap()
@@ -423,7 +425,7 @@ mod tests {
         set_repeat(&token, RepeatState::Track, None).await.unwrap();
         set_shuffle(&token, true, None).await.unwrap();
         set_volume(&token, 17, None).await.unwrap();
-        timer::delay_for(wait_time).await;
+        time::delay_for(wait_time).await;
         let playback = get_playback(&token, Some(Market::FromToken))
             .await
             .unwrap()
@@ -436,7 +438,7 @@ mod tests {
             .unwrap();
         set_shuffle(&token, false, None).await.unwrap();
         set_volume(&token, 73, None).await.unwrap();
-        timer::delay_for(wait_time).await;
+        time::delay_for(wait_time).await;
         let playback = get_playback(&token, Some(Market::FromToken))
             .await
             .unwrap()
@@ -447,7 +449,7 @@ mod tests {
 
         // Skip previous
         skip_prev(&token, None).await.unwrap();
-        timer::delay_for(wait_time).await;
+        time::delay_for(wait_time).await;
         let playing = get_playing_track(&token, Some(Market::FromToken))
             .await
             .unwrap()
@@ -456,7 +458,7 @@ mod tests {
 
         // Skip next
         skip_next(&token, None).await.unwrap();
-        timer::delay_for(wait_time).await;
+        time::delay_for(wait_time).await;
         let playing = get_playing_track(&token, Some(Market::FromToken))
             .await
             .unwrap()
@@ -465,7 +467,7 @@ mod tests {
 
         // Pause
         pause(&token, None).await.unwrap();
-        timer::delay_for(wait_time).await;
+        time::delay_for(wait_time).await;
         let playback = get_playback(&token, Some(Market::FromToken))
             .await
             .unwrap()

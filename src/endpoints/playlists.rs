@@ -3,9 +3,9 @@
 //! The parameter `snapshot_id` is the snapshot of the playlist to perform the operation on to
 //! prevent concurrent accesses causing problems.
 //!
-//! Take this example; person A gets playlist X. Person B removes song N from playlist X. Person A
-//! tries to do something to playlist X, assuming song N still exists, but it causes unexpected
-//! behaviour because song N doesn't actually exist any more. However, with snapshot ids, person A
+//! Take this example; person A gets playlist X. Person B removes track N from playlist X. Person A
+//! tries to do something to playlist X, assuming track N still exists, but it causes unexpected
+//! behaviour because track N doesn't actually exist any more. However, with snapshot ids, person A
 //! will have used the snapshot ID they received from the initial request in their request. Spotify
 //! knows that person A is attempting to operate on an older playlist, and adjusts accordingly,
 //! causing no unexpected behaviour.
@@ -302,7 +302,7 @@ pub async fn reorder_playlist(
 /// Requires `playlist-modify-public` if the playlist is public, requires `playlist-modify-private`
 /// if it is private.
 ///
-/// This function removes all the songs from the given playlist, and replaces them with the given
+/// This function removes all the tracks from the given playlist, and replaces them with the given
 /// tracks. The maximum number of tracks is 100, if you need more you can use
 /// [add_to_playlist](fn.add_to_playlist.html).
 ///
@@ -391,7 +391,7 @@ mod tests {
     use crate::endpoints::token;
     use crate::*;
     use std::time::Duration;
-    use tokio::timer;
+    use tokio::time;
 
     #[tokio::test]
     async fn test() {
@@ -530,7 +530,7 @@ mod tests {
         upload_playlist_cover_file(&token, &playlist.id, "example_image.jpeg")
             .await
             .unwrap();
-        timer::delay_for(Duration::from_secs(5)).await;
+        time::delay_for(Duration::from_secs(5)).await;
         let images = get_playlists_images(&token, &playlist.id).await.unwrap();
         assert_eq!(images.len(), 1);
         if let Some(height) = images[0].height {

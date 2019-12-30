@@ -30,7 +30,7 @@ pub struct AudioFeatures {
     pub valence: f64,
 }
 
-/// The mode of a song (major or minor).
+/// The mode of a track (major or minor).
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 pub enum Mode {
     Major,
@@ -132,7 +132,7 @@ pub struct AudioAnalysis {
     /// guitar solo, etc. Each section contains its own descriptions of tempo, key, mode,
     /// time_signature, and loudness.
     pub sections: Vec<Section>,
-    /// Audio segments attempts to subdivide a song into many segments, with each segment
+    /// Audio segments attempts to subdivide a track into many segments, with each segment
     /// containing a roughly consistent sound throughout its duration.
     pub segments: Vec<Segment>,
 }
@@ -150,7 +150,7 @@ pub struct TimeInterval {
     pub confidence: f64,
 }
 
-/// A section of a song.
+/// A section of a track.
 ///
 /// See
 /// [here](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/#section-object)
@@ -173,7 +173,7 @@ pub struct Section {
     pub time_signature_confidence: f64,
 }
 
-/// A segment in a song.
+/// A segment in a track.
 ///
 /// See
 /// [here](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/#segment-object)

@@ -1,7 +1,7 @@
 [package]
 name = "aspotify"
 description = "Asynchronous client for the Spotify API"
-version = "0.0.1"
+version = "0.1.0"
 readme = "README.md"
 keywords = ["Spotify", "API", "Asynchronous"]
 categories = ["api-bindings", "asynchronous", "authentication", "web-programming", "web-programming::http-client"]
@@ -10,8 +10,8 @@ authors = ["KaiJewson <58880148+KaiJewson@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-reqwest = "0.10.0-alpha.2"
-tokio = "0.2.0-alpha.6"
+reqwest = "0.10.0"
+tokio = { version = "0.2.6", features = ["time"] }
 serde = { version = "1.0.104", features = ["derive"] }
 serde_millis = "0.1.1"
 chrono = { version = "0.4.10", features = ["serde"] }
@@ -24,3 +24,4 @@ base64 = "0.11.0"
 
 [dev-dependencies]
 dotenv = "0.15.0"
+tokio = { version = "0.2.6", features = ["time", "macros"] }
