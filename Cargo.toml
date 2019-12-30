@@ -3,6 +3,7 @@ name = "aspotify"
 description = "Asynchronous client for the Spotify API"
 version = "0.1.0"
 readme = "README.md"
+repository = "https://github.com/KaiJewson/aspotify"
 keywords = ["Spotify", "API", "Asynchronous"]
 categories = ["api-bindings", "asynchronous", "authentication", "web-programming", "web-programming::http-client"]
 license = "MIT OR Apache-2.0"
