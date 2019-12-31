@@ -69,7 +69,7 @@ inherit_track_simplified!(
 );
 
 /// A link to a track.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TrackLink {
     /// Known external URLs for this track.
     pub external_urls: HashMap<String, String>,
@@ -79,7 +79,7 @@ pub struct TrackLink {
 }
 
 /// When and how a track was played.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayHistory {
     /// The track the user listened to.
     pub track: TrackSimplified,
@@ -90,7 +90,7 @@ pub struct PlayHistory {
 }
 
 /// Information about a track that has been saved.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SavedTrack {
     /// When the track was saved.
     pub added_at: DateTime<Utc>,
@@ -99,7 +99,7 @@ pub struct SavedTrack {
 }
 
 /// The number of tracks an object contains.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Tracks {
     pub total: usize,
 }

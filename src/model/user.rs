@@ -58,7 +58,7 @@ inherit_user_public!(
 );
 
 /// The subscription level; premium or free.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Subscription {
     Premium,

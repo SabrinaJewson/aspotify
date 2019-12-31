@@ -6,7 +6,7 @@ pub mod c_c_flow;
 use crate::util::*;
 pub use auth_code_flow::*;
 pub use c_c_flow::*;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use std::env::{self, VarError};
 use std::ffi::OsStr;
 use std::time::{Duration, Instant};
@@ -62,11 +62,11 @@ impl ClientCredentials {
 /// An access token for the Spotify API.
 ///
 /// Generate these with CCFlow or AuthCodeFlow.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccessToken {
     #[serde(rename = "access_token")]
     pub token: String,
-    #[serde(rename = "expires_in", deserialize_with = "instant_from_seconds")]
+    #[serde(rename = "expires_in", with = "serde_instant_seconds")]
     pub expires: Instant,
 }
 

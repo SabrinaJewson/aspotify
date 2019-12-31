@@ -16,7 +16,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use isocountry::CountryCode;
 use serde::{
     de::{self, Visitor},
-    Deserialize, Deserializer,
+    Serialize, Deserialize, Deserializer,
 };
 use std::collections::HashMap;
 use std::fmt::{self, Formatter};
@@ -25,7 +25,7 @@ use std::time::Duration;
 macro_rules! to_struct {
     ($(#[$attr:meta])* $name:ident { $($(#[$f_attr:meta])* $f_name:ident : $f_ty:ty,)* }) => {
         $(#[$attr])*
-        #[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+        #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, Deserialize)]
         pub struct $name {
             $(
                 $(#[$f_attr])*
@@ -45,7 +45,7 @@ mod track;
 mod user;
 
 /// A category of music, for example "Mood", "Top Lists", "Workout", et cetera.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Category {
     /// The category icon, in various sizes, probably with widest first (although this is not
     /// specified by the Web API documentation).
@@ -58,47 +58,61 @@ pub struct Category {
 }
 
 /// The copyright information for a resource.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Copyright {
     /// The copyright text.
     pub text: String,
     /// Whether the copyright is for the performance of the piece, not the piece.
-    #[serde(rename = "type", deserialize_with = "is_p")]
+    #[serde(rename = "type", with = "serde_is_p")]
     pub performance_copyright: bool,
 }
 
-fn is_p<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct CopyrightType;
+mod serde_is_p {
+    use serde::{Serializer, Deserializer, de::{self, Visitor}};
+    use std::fmt::{self, Formatter};
 
-    impl<'de> Visitor<'de> for CopyrightType {
-        type Value = bool;
-        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
-            f.write_str("P or C")
-        }
-        fn visit_str<E: de::Error>(self, s: &str) -> Result<Self::Value, E> {
-            match s {
-                "P" => Ok(true),
-                "C" => Ok(false),
-                _ => Err(de::Error::invalid_value(de::Unexpected::Str(s), &self)),
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<bool, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct CopyrightType;
+    
+        impl<'de> Visitor<'de> for CopyrightType {
+            type Value = bool;
+            fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+                f.write_str("P or C")
+            }
+            fn visit_str<E: de::Error>(self, s: &str) -> Result<Self::Value, E> {
+                match s {
+                    "P" => Ok(true),
+                    "C" => Ok(false),
+                    _ => Err(de::Error::invalid_value(de::Unexpected::Str(s), &self)),
+                }
             }
         }
+    
+        deserializer.deserialize_str(CopyrightType)
     }
 
-    deserializer.deserialize_str(CopyrightType)
+    #[allow(clippy::trivially_copy_pass_by_ref)]
+    pub fn serialize<S: Serializer>(v: &bool, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(if *v {
+            "P"
+        } else {
+            "C"
+        })
+    }
 }
 
 /// Information about the followers of an item. Currently only contains the number of followers.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Followers {
     /// The total number of followers.
     pub total: usize,
 }
 
 /// An image with a URL and an optional width and height.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Image {
     /// The source URL of the image.
     pub url: String,
@@ -109,7 +123,7 @@ pub struct Image {
 }
 
 /// A page of items.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Page<T> {
     /// The items in the page.
     pub items: Vec<T>,
@@ -122,7 +136,7 @@ pub struct Page<T> {
 }
 
 /// A page of items, using a cursor to find the next page.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CursorPage<T> {
     /// The items in the page.
     pub items: Vec<T>,
@@ -135,13 +149,13 @@ pub struct CursorPage<T> {
 }
 
 /// Object that contains the next CursorPage.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Cursor {
     pub after: Option<String>,
 }
 
 /// A page of items, using a cursor to move backwards and forwards.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TwoWayCursorPage<T> {
     /// The items in the page.
     pub items: Vec<T>,
@@ -152,14 +166,14 @@ pub struct TwoWayCursorPage<T> {
 }
 
 /// Object that contains the next and previous CursorPage.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TwoWayCursor {
     pub after: Option<String>,
     pub before: Option<String>,
 }
 
 /// Recommended tracks for the user.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Recommendations {
     /// An array of recommendation seeds.
     pub seeds: Vec<RecommendationSeed>,
@@ -168,7 +182,7 @@ pub struct Recommendations {
 }
 
 /// How the recommendation was chosen.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RecommendationSeed {
     /// The number of tracks available after min_* and max_* filters have been applied.
@@ -185,7 +199,7 @@ pub struct RecommendationSeed {
 }
 
 /// The context from which the recommendation was chosen; artist, track or genre.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum SeedType {
     Artist,
@@ -194,7 +208,7 @@ pub enum SeedType {
 }
 
 /// How precise a date measurement is.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DatePrecision {
     Year,
@@ -203,13 +217,13 @@ pub enum DatePrecision {
 }
 
 /// Restrictions applied to a track due to markets.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Restrictions {
     pub reason: String,
 }
 
 /// A type of item in the Spotify model.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ItemType {
     Album,
@@ -230,7 +244,7 @@ impl ItemType {
 }
 
 /// The results of a search.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SearchResults {
     pub artists: Option<Page<Artist>>,
     pub albums: Option<Page<AlbumSimplified>>,

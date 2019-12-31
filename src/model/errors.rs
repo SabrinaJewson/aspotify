@@ -8,7 +8,7 @@ use std::{error, io};
 pub trait SpotifyError: error::Error {}
 
 /// An error caused by one of the Web API endpoints relating to authentication.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AuthenticationError {
     /// A high level description of the error.
     pub error: String,
@@ -25,14 +25,14 @@ impl Display for AuthenticationError {
 impl error::Error for AuthenticationError {}
 impl SpotifyError for AuthenticationError {}
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct ErrorWrapper<T> {
     error: T,
 }
 
 /// A regular error object returns by endpoints of the API.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(from = "ErrorWrapper<ErrorInternal>")]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(from = "ErrorWrapper<ErrorInternal>", into = "ErrorWrapper<ErrorInternal>")]
 pub struct Error {
     /// The HTTP status code of the error.
     pub status: StatusCode,
@@ -40,9 +40,9 @@ pub struct Error {
     pub message: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct ErrorInternal {
-    #[serde(deserialize_with = "deserialize_status_code")]
+    #[serde(with = "serde_status_code")]
     status: StatusCode,
     message: String,
 }
@@ -52,6 +52,17 @@ impl From<ErrorWrapper<ErrorInternal>> for Error {
         Self {
             status: error.error.status,
             message: error.error.message,
+        }
+    }
+}
+
+impl From<Error> for ErrorWrapper<ErrorInternal> {
+    fn from(error: Error) -> Self {
+        Self {
+            error: ErrorInternal {
+                status: error.status,
+                message: error.message,
+            }
         }
     }
 }
@@ -66,8 +77,8 @@ impl error::Error for Error {}
 impl SpotifyError for Error {}
 
 /// An error returned by the player. It is an extension of Error, with an additional reason.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(from = "ErrorWrapper<PlayerErrorInternal>")]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(from = "ErrorWrapper<PlayerErrorInternal>", into = "ErrorWrapper<PlayerErrorInternal>")]
 pub struct PlayerError {
     /// The HTTP status code of the error.
     pub status: StatusCode,
@@ -77,9 +88,9 @@ pub struct PlayerError {
     pub reason: PlayerErrorReason,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct PlayerErrorInternal {
-    #[serde(deserialize_with = "deserialize_status_code")]
+    #[serde(with = "serde_status_code")]
     status: StatusCode,
     message: String,
     reason: PlayerErrorReason,
@@ -91,6 +102,18 @@ impl From<ErrorWrapper<PlayerErrorInternal>> for PlayerError {
             status: error.error.status,
             message: error.error.message,
             reason: error.error.reason,
+        }
+    }
+}
+
+impl From<PlayerError> for ErrorWrapper<PlayerErrorInternal> {
+    fn from(error: PlayerError) -> Self {
+        Self {
+            error: PlayerErrorInternal {
+                status: error.status,
+                message: error.message,
+                reason: error.reason,
+            }
         }
     }
 }
@@ -160,7 +183,7 @@ impl<E: SpotifyError> From<io::Error> for EndpointError<E> {
 }
 
 /// A reason for an PlayerError.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PlayerErrorReason {
     /// There is no previous track in the context.

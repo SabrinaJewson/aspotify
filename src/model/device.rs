@@ -1,9 +1,10 @@
 use crate::model::*;
+use serde::{Serializer, ser::SerializeStruct};
 // See line 50
 //use chrono::serde::ts_milliseconds;
 
 /// A device object.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Device {
     /// The device id. It can be None, and I don't know why.
     pub id: Option<String>,
@@ -24,7 +25,7 @@ pub struct Device {
 }
 
 /// A type of device.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 pub enum DeviceType {
     Computer,
     Tablet,
@@ -42,7 +43,7 @@ pub enum DeviceType {
 }
 
 /// Information about the currently playing track.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CurrentlyPlaying {
     /// The context of the currently playing track. Is None for example if a private session is
     /// enabled.
@@ -55,7 +56,7 @@ pub struct CurrentlyPlaying {
     /// enabled.
     #[serde(
         rename = "progress_ms",
-        deserialize_with = "duration_from_millis_option"
+        with = "serde_duration_millis_option"
     )]
     pub progress: Option<Duration>,
     /// If something is currently playing.
@@ -69,7 +70,7 @@ pub struct CurrentlyPlaying {
 }
 
 /// Information about a user's current playback state.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CurrentPlayback {
     /// The currently active device.
     pub device: Device,
@@ -83,14 +84,14 @@ pub struct CurrentPlayback {
 }
 
 /// Actions that are disallowed in the current context.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Actions {
-    #[serde(deserialize_with = "deserialize_disallows")]
+    #[serde(with = "serde_disallows")]
     pub disallows: Vec<Disallow>,
 }
 
 /// An action that is currently not able to be performed.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Disallow {
     InterruptingPlayback,
@@ -106,7 +107,7 @@ pub enum Disallow {
 }
 
 /// The type of track.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TrackType {
     Track,
@@ -126,12 +127,36 @@ pub struct Context {
     /// The [Spotify
     /// ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
     /// for the context.
-    #[serde(rename = "uri", deserialize_with = "uri_to_id")]
+    #[serde(rename = "uri", deserialize_with = "de_any_uri")]
     pub id: String,
 }
 
+impl Serialize for Context {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut context = serializer.serialize_struct("Context", 3)?;
+        context.serialize_field("type", &self.context_type)?;
+        context.serialize_field("external_urls", &self.external_urls)?;
+        context.serialize_field("uri", {
+            struct UriSerialize<'a> {
+                context_type: ItemType,
+                id: &'a str,
+            }
+            impl Serialize for UriSerialize<'_> {
+                fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                    serializer.serialize_str(&format!("spotify:{}:{}", self.context_type.as_str(), self.id))
+                }
+            }
+            &UriSerialize {
+                context_type: self.context_type,
+                id: &self.id
+            }
+        })?;
+        context.end()
+    }
+}
+
 /// Repeating the track, the context or not at all.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RepeatState {
     /// Not repeating.
