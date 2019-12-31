@@ -51,7 +51,7 @@ inherit_playlist_simplified!(
 );
 
 /// A track inside a playlist.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlaylistTrack {
     /// The date and time that the track was added. Some very old playlists might have None.
     pub added_at: Option<DateTime<Utc>>,
@@ -65,7 +65,7 @@ pub struct PlaylistTrack {
 }
 
 /// A list of featured playlists, and a message.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FeaturedPlaylists {
     /// A message about the featured playlists.
     pub message: String,

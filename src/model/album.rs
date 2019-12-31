@@ -24,7 +24,7 @@ macro_rules! inherit_album_simplified {
             /// The name of the album; if the album has been taken down, this is an empty string.
             name: String,
             /// When the album was released.
-            #[serde(deserialize_with = "from_arbitrary_date_precision")]
+            #[serde(deserialize_with = "de_date_any_precision")]
             release_date: NaiveDate,
             /// How precise the release date is: precise to the year, month or day.
             release_date_precision: DatePrecision,
@@ -70,7 +70,7 @@ inherit_album_simplified!(
 );
 
 /// The type of album.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AlbumType {
     #[serde(alias = "ALBUM")]
@@ -83,7 +83,7 @@ pub enum AlbumType {
 
 /// When getting all an artist's albums, if the artist didn't release the album but instead
 /// appeared on it, this is set to AppearsOn.
-#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AlbumGroup {
     Album,
@@ -104,7 +104,7 @@ impl AlbumGroup {
 }
 
 /// Information about an album that has been saved.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SavedAlbum {
     /// When the album was saved.
     pub added_at: DateTime<Utc>,
