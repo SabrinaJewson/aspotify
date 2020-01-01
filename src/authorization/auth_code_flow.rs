@@ -177,50 +177,7 @@ impl AuthCodeFlow {
         credentials: ClientCredentials,
         redirected_to: &str,
     ) -> Result<Self, FromRedirectError> {
-        let url = Url::parse(redirected_to).map_err(|_| FromRedirectError::InvalidRedirect)?;
-
-        let pairs: HashMap<_, _> = url.query_pairs().collect();
-        if !VALID_STATES.lock().await.remove(
-            &pairs
-                .get("state")
-                .ok_or(FromRedirectError::InvalidRedirect)?[..],
-        ) {
-            return Err(FromRedirectError::InvalidRedirect);
-        }
-        if let Some(error) = pairs.get("error") {
-            return Err(FromRedirectError::SpotifyError(SpotifyRedirectError::from(
-                error.to_string(),
-            )));
-        }
-        let code = pairs
-            .get("code")
-            .ok_or(FromRedirectError::InvalidRedirect)?;
-
-        let orig_url = &url.as_str()[0..url
-            .as_str()
-            .find('?')
-            .ok_or(FromRedirectError::InvalidRedirect)?];
-        let response = CLIENT
-            .post("https://accounts.spotify.com/api/token")
-            .form(&[
-                ("grant_type", "authorization_code"),
-                ("code", code),
-                ("redirect_uri", orig_url),
-            ])
-            .basic_auth(&credentials.id, Some(&credentials.secret))
-            .send()
-            .await?;
-
-        #[derive(Deserialize)]
-        struct Response {
-            refresh_token: String,
-            #[serde(flatten)]
-            token: AccessToken,
-        }
-        let Response {
-            refresh_token,
-            token,
-        } = serde_json::from_str(&response.text().await?)?;
+        let (token, refresh_token) = auth_code_send(&credentials, redirected_to).await?;
 
         Ok(Self {
             credentials,
@@ -250,30 +207,85 @@ impl AuthCodeFlow {
     }
     /// Returns the cache or sends a request.
     pub async fn send(&self) -> Result<AccessToken, EndpointError<AuthenticationError>> {
-        let cache = self.cache.lock().await;
+        let mut cache = self.cache.lock().await;
         if Instant::now() < cache.expires {
             return Ok(cache.clone());
         }
-
-        let request = CLIENT
-            .post("https://accounts.spotify.com/api/token")
-            .form(&[
-                ("grant_type", "refresh_token"),
-                ("refresh_token", &self.refresh_token),
-            ])
-            .basic_auth(&self.credentials.id, Some(&self.credentials.secret));
-        drop(cache);
-
-        let response = request.send().await?;
-        let status = response.status();
-        let text = response.text().await?;
-        if !status.is_success() {
-            return Err(EndpointError::SpotifyError(serde_json::from_str(&text)?));
-        }
-        let token = serde_json::from_str::<AccessToken>(&text)?;
-        *self.cache.lock().await = token.clone();
+        let token = refresh_token_send(&self.credentials, &self.refresh_token).await?;
+        *cache = token.clone();
         Ok(token)
     }
+}
+
+/// Get an Authorization Flow access token and refresh token without creating an AuthFlow from a
+/// redirect URL.
+pub async fn auth_code_send(credentials: &ClientCredentials, redirected_to: &str) -> Result<(AccessToken, String), FromRedirectError> {
+    let url = Url::parse(redirected_to).map_err(|_| FromRedirectError::InvalidRedirect)?;
+
+    let pairs: HashMap<_, _> = url.query_pairs().collect();
+    if !VALID_STATES.lock().await.remove(
+        &pairs
+            .get("state")
+            .ok_or(FromRedirectError::InvalidRedirect)?[..],
+    ) {
+        return Err(FromRedirectError::InvalidRedirect);
+    }
+    if let Some(error) = pairs.get("error") {
+        return Err(FromRedirectError::SpotifyError(SpotifyRedirectError::from(
+            error.to_string(),
+        )));
+    }
+    let code = pairs
+        .get("code")
+        .ok_or(FromRedirectError::InvalidRedirect)?;
+
+    let orig_url = &url.as_str()[0..url
+        .as_str()
+        .find('?')
+        .ok_or(FromRedirectError::InvalidRedirect)?];
+    let response = CLIENT
+        .post("https://accounts.spotify.com/api/token")
+        .form(&[
+            ("grant_type", "authorization_code"),
+            ("code", code),
+            ("redirect_uri", orig_url),
+        ])
+        .basic_auth(&credentials.id, Some(&credentials.secret))
+        .send()
+        .await?;
+
+    #[derive(Deserialize)]
+    struct Response {
+        refresh_token: String,
+        #[serde(flatten)]
+        token: AccessToken,
+    }
+    let Response {
+        refresh_token,
+        token,
+    } = serde_json::from_str(&response.text().await?)?;
+    
+    Ok((token, refresh_token))
+}
+
+/// Get an Authorization Flow access token without creating an AuthFlow from a refresh token.
+pub async fn refresh_token_send(credentials: &ClientCredentials, refresh_token: &str) -> Result<AccessToken, EndpointError<AuthenticationError>> {
+    let response = CLIENT
+        .post("https://accounts.spotify.com/api/token")
+        .form(&[
+            ("grant_type", "refresh_token"),
+            ("refresh_token", refresh_token),
+        ])
+        .basic_auth(&credentials.id, Some(&credentials.secret))
+        .send()
+        .await?;
+
+    let status = response.status();
+    let text = response.text().await?;
+    if !status.is_success() {
+        return Err(EndpointError::SpotifyError(serde_json::from_str(&text)?));
+    }
+    Ok(serde_json::from_str::<AccessToken>(&text)?)
 }
 
 /// An error generated by Spotify after a redirect.
