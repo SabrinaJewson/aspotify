@@ -42,6 +42,10 @@ pub async fn get_audio_features_tracks(
     token: &AccessToken,
     ids: &[&str],
 ) -> Result<Vec<AudioFeatures>, EndpointError<Error>> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
     #[derive(Deserialize)]
     struct ManyAudioFeatures {
         audio_features: Vec<AudioFeatures>,
@@ -66,6 +70,10 @@ pub async fn get_tracks(
     ids: &[&str],
     market: Option<Market>,
 ) -> Result<Vec<Track>, EndpointError<Error>> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
     #[derive(Deserialize)]
     struct Tracks {
         tracks: Vec<Track>,
