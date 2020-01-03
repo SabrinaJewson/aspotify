@@ -16,7 +16,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use isocountry::CountryCode;
 use serde::{
     de::{self, Visitor},
-    Serialize, Deserialize, Deserializer,
+    Deserialize, Deserializer, Serialize,
 };
 use std::collections::HashMap;
 use std::fmt::{self, Formatter};
@@ -68,7 +68,10 @@ pub struct Copyright {
 }
 
 mod serde_is_p {
-    use serde::{Serializer, Deserializer, de::{self, Visitor}};
+    use serde::{
+        de::{self, Visitor},
+        Deserializer, Serializer,
+    };
     use std::fmt::{self, Formatter};
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<bool, D::Error>
@@ -76,7 +79,7 @@ mod serde_is_p {
         D: Deserializer<'de>,
     {
         struct CopyrightType;
-    
+
         impl<'de> Visitor<'de> for CopyrightType {
             type Value = bool;
             fn expecting(&self, f: &mut Formatter) -> fmt::Result {
@@ -90,17 +93,13 @@ mod serde_is_p {
                 }
             }
         }
-    
+
         deserializer.deserialize_str(CopyrightType)
     }
 
     #[allow(clippy::trivially_copy_pass_by_ref)]
     pub fn serialize<S: Serializer>(v: &bool, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(if *v {
-            "P"
-        } else {
-            "C"
-        })
+        serializer.serialize_str(if *v { "P" } else { "C" })
     }
 }
 

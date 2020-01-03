@@ -1,0 +1,25 @@
+use aspotify::{AuthCodeFlow, ClientCredentials, CurrentlyPlaying};
+
+#[tokio::main]
+async fn main() {
+    dotenv::dotenv().unwrap();
+
+    let flow = AuthCodeFlow::from_refresh(
+        ClientCredentials::from_env().unwrap(),
+        std::fs::read_to_string(".refresh_token").unwrap(),
+    );
+
+    let playing = aspotify::get_playing_track(&flow.send().await.unwrap(), None)
+        .await
+        .unwrap();
+
+    match playing {
+        Some(CurrentlyPlaying {
+            item: Some(track), ..
+        }) => println!("Currently playing is: {}", track.name),
+        Some(CurrentlyPlaying { item: None, .. }) => {
+            println!("Currently playing an unknown track.")
+        }
+        None => println!("Nothing currently playing."),
+    }
+}

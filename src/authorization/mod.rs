@@ -6,7 +6,7 @@ pub mod c_c_flow;
 use crate::util::*;
 pub use auth_code_flow::*;
 pub use c_c_flow::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::env::{self, VarError};
 use std::ffi::OsStr;
 use std::time::{Duration, Instant};

@@ -32,7 +32,10 @@ struct ErrorWrapper<T> {
 
 /// A regular error object returns by endpoints of the API.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(from = "ErrorWrapper<ErrorInternal>", into = "ErrorWrapper<ErrorInternal>")]
+#[serde(
+    from = "ErrorWrapper<ErrorInternal>",
+    into = "ErrorWrapper<ErrorInternal>"
+)]
 pub struct Error {
     /// The HTTP status code of the error.
     pub status: StatusCode,
@@ -62,7 +65,7 @@ impl From<Error> for ErrorWrapper<ErrorInternal> {
             error: ErrorInternal {
                 status: error.status,
                 message: error.message,
-            }
+            },
         }
     }
 }
@@ -78,7 +81,10 @@ impl SpotifyError for Error {}
 
 /// An error returned by the player. It is an extension of Error, with an additional reason.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(from = "ErrorWrapper<PlayerErrorInternal>", into = "ErrorWrapper<PlayerErrorInternal>")]
+#[serde(
+    from = "ErrorWrapper<PlayerErrorInternal>",
+    into = "ErrorWrapper<PlayerErrorInternal>"
+)]
 pub struct PlayerError {
     /// The HTTP status code of the error.
     pub status: StatusCode,
@@ -113,7 +119,7 @@ impl From<PlayerError> for ErrorWrapper<PlayerErrorInternal> {
                 status: error.status,
                 message: error.message,
                 reason: error.reason,
-            }
+            },
         }
     }
 }

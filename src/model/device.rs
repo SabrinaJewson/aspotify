@@ -1,5 +1,5 @@
 use crate::model::*;
-use serde::{Serializer, ser::SerializeStruct};
+use serde::{ser::SerializeStruct, Serializer};
 // See line 50
 //use chrono::serde::ts_milliseconds;
 
@@ -54,10 +54,7 @@ pub struct CurrentlyPlaying {
     // pub timestamp: DateTime<Utc>,
     /// Progress into the currently playing track. Is None for example if a private session is
     /// enabled.
-    #[serde(
-        rename = "progress_ms",
-        with = "serde_duration_millis_option"
-    )]
+    #[serde(rename = "progress_ms", with = "serde_duration_millis_option")]
     pub progress: Option<Duration>,
     /// If something is currently playing.
     pub is_playing: bool,
@@ -143,12 +140,16 @@ impl Serialize for Context {
             }
             impl Serialize for UriSerialize<'_> {
                 fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-                    serializer.serialize_str(&format!("spotify:{}:{}", self.context_type.as_str(), self.id))
+                    serializer.serialize_str(&format!(
+                        "spotify:{}:{}",
+                        self.context_type.as_str(),
+                        self.id
+                    ))
                 }
             }
             &UriSerialize {
                 context_type: self.context_type,
-                id: &self.id
+                id: &self.id,
             }
         })?;
         context.end()
