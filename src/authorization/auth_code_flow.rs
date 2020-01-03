@@ -219,7 +219,10 @@ impl AuthCodeFlow {
 
 /// Get an Authorization Flow access token and refresh token without creating an AuthFlow from a
 /// redirect URL.
-pub async fn auth_code_send(credentials: &ClientCredentials, redirected_to: &str) -> Result<(AccessToken, String), FromRedirectError> {
+pub async fn auth_code_send(
+    credentials: &ClientCredentials,
+    redirected_to: &str,
+) -> Result<(AccessToken, String), FromRedirectError> {
     let url = Url::parse(redirected_to).map_err(|_| FromRedirectError::InvalidRedirect)?;
 
     let pairs: HashMap<_, _> = url.query_pairs().collect();
@@ -264,12 +267,15 @@ pub async fn auth_code_send(credentials: &ClientCredentials, redirected_to: &str
         refresh_token,
         token,
     } = serde_json::from_str(&response.text().await?)?;
-    
+
     Ok((token, refresh_token))
 }
 
 /// Get an Authorization Flow access token without creating an AuthFlow from a refresh token.
-pub async fn refresh_token_send(credentials: &ClientCredentials, refresh_token: &str) -> Result<AccessToken, EndpointError<AuthenticationError>> {
+pub async fn refresh_token_send(
+    credentials: &ClientCredentials,
+    refresh_token: &str,
+) -> Result<AccessToken, EndpointError<AuthenticationError>> {
     let response = CLIENT
         .post("https://accounts.spotify.com/api/token")
         .form(&[

@@ -465,6 +465,25 @@ mod tests {
             .unwrap();
         assert_eq!(playing.item.unwrap().id, "0vjYxBDAcflD0358arIVZG");
 
+        // Play from playlist
+        play(
+            &token,
+            Some(Play::Context(
+                ItemType::Playlist,
+                "37i9dQZF1DWSVtp02hITpN",
+                0,
+            )),
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+        time::delay_for(wait_time).await;
+        get_playing_track(&token, Some(Market::FromToken))
+            .await
+            .unwrap()
+            .unwrap();
+
         // Pause
         pause(&token, None).await.unwrap();
         time::delay_for(wait_time).await;

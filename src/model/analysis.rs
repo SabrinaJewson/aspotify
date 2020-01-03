@@ -1,5 +1,5 @@
 use crate::model::*;
-use serde::{Serializer, de::Unexpected};
+use serde::{de::Unexpected, Serializer};
 use std::u64;
 
 /// Information and features of a track.
@@ -63,7 +63,7 @@ impl<'de> Deserialize<'de> for Mode {
 
 impl Serialize for Mode {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self { 
+        match self {
             Self::Major => serializer.serialize_u64(1),
             Self::Minor => serializer.serialize_u64(0),
         }
@@ -71,9 +71,12 @@ impl Serialize for Mode {
 }
 
 mod serde_mode_opt {
-    use serde::{Serialize, Serializer, Deserializer, de::{self, Visitor}};
-    use std::fmt::{self, Formatter};
     use super::{Mode, ModeVisitor};
+    use serde::{
+        de::{self, Visitor},
+        Deserializer, Serialize, Serializer,
+    };
+    use std::fmt::{self, Formatter};
     use std::u64;
 
     struct ModeOptVisitor;
@@ -110,9 +113,12 @@ mod serde_mode_opt {
 }
 
 mod serde_key_opt {
-    use serde::{Serializer, Deserializer, de::{self, Visitor, Unexpected}};
-    use std::fmt::{self, Formatter};
+    use serde::{
+        de::{self, Unexpected, Visitor},
+        Deserializer, Serializer,
+    };
     use std::convert::TryInto;
+    use std::fmt::{self, Formatter};
 
     struct KeyOptVisitor;
     impl<'de> Visitor<'de> for KeyOptVisitor {
