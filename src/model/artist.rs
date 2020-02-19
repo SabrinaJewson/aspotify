@@ -38,3 +38,13 @@ inherit_artist_simplified!(
         popularity: u32,
     }
 );
+
+impl From<Artist> for ArtistSimplified {
+    fn from(artist: Artist) -> Self {
+        Self {
+            external_urls: artist.external_urls,
+            id: artist.id,
+            name: artist.name,
+        }
+    }
+}

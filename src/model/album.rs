@@ -69,6 +69,39 @@ inherit_album_simplified!(
     }
 );
 
+impl From<Album> for AlbumSimplified {
+    fn from(album: Album) -> Self {
+        Self {
+            album_type: album.album_type,
+            artists: album.artists,
+            available_markets: album.available_markets,
+            external_urls: album.external_urls,
+            id: album.id,
+            images: album.images,
+            name: album.name,
+            release_date: album.release_date,
+            release_date_precision: album.release_date_precision,
+            restrictions: album.restrictions,
+        }
+    }
+}
+impl From<ArtistsAlbum> for AlbumSimplified {
+    fn from(album: ArtistsAlbum) -> Self {
+        Self {
+            album_type: album.album_type,
+            artists: album.artists,
+            available_markets: album.available_markets,
+            external_urls: album.external_urls,
+            id: album.id,
+            images: album.images,
+            name: album.name,
+            release_date: album.release_date,
+            release_date_precision: album.release_date_precision,
+            restrictions: album.restrictions,
+        }
+    }
+}
+
 /// The type of album.
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

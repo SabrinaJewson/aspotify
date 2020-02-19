@@ -19,6 +19,12 @@ macro_rules! inherit_user_simplified {
     }
 }
 
+inherit_user_simplified!(
+    /// A user object that contains less fields than UserPublic and is not documented anywhere, but
+    /// is returned by some endpoints.
+    UserSimplified {}
+);
+
 macro_rules! inherit_user_public {
     ($(#[$attr:meta])* $name:ident { $($(#[$f_attr:meta])* $f_name:ident : $f_ty:ty,)* }) => {
         inherit_user_simplified!($(#[$attr])* $name {
@@ -34,11 +40,6 @@ macro_rules! inherit_user_public {
     }
 }
 
-inherit_user_simplified!(
-    /// A user object that contains less fields than UserPubic and is not documented anywhere, but
-    /// is returned by some endpoints.
-    UserSimplified {}
-);
 inherit_user_public!(
     /// A user object that is accessible to everyone.
     UserPublic {}
@@ -56,6 +57,32 @@ inherit_user_public!(
         product: Option<Subscription>,
     }
 );
+
+impl From<UserPublic> for UserSimplified {
+    fn from(user: UserPublic) -> Self {
+        Self {
+            display_name: user.display_name,
+            external_urls: user.external_urls,
+            id: user.id,
+        }
+    }
+}
+impl From<UserPrivate> for UserPublic {
+    fn from(user: UserPrivate) -> Self {
+        Self {
+            display_name: user.display_name,
+            external_urls: user.external_urls,
+            id: user.id,
+            followers: user.followers,
+            images: user.images,
+        }
+    }
+}
+impl From<UserPrivate> for UserSimplified {
+    fn from(user: UserPrivate) -> Self {
+        Self::from(UserPublic::from(user))
+    }
+}
 
 /// The subscription level; premium or free.
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
