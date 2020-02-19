@@ -42,6 +42,14 @@ pub struct Error {
     /// A short description of the error's cause.
     pub message: String,
 }
+impl From<PlayerError> for Error {
+    fn from(e: PlayerError) -> Self {
+        Self {
+            status: e.status,
+            message: e.message,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct ErrorInternal {

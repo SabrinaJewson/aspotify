@@ -68,6 +68,27 @@ inherit_track_simplified!(
     }
 );
 
+impl From<Track> for TrackSimplified {
+    fn from(track: Track) -> Self {
+        Self {
+            artists: track.artists,
+            available_markets: track.available_markets,
+            disc_number: track.disc_number,
+            duration: track.duration,
+            explicit: track.explicit,
+            external_urls: track.external_urls,
+            id: track.id,
+            is_playable: track.is_playable,
+            linked_from: track.linked_from,
+            restrictions: track.restrictions,
+            name: track.name,
+            preview_url: track.preview_url,
+            track_number: track.track_number,
+            is_local: track.is_local,
+        }
+    }
+}
+
 /// A link to a track.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TrackLink {

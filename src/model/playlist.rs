@@ -50,6 +50,22 @@ inherit_playlist_simplified!(
     }
 );
 
+impl From<Playlist> for PlaylistSimplified {
+    fn from(playlist: Playlist) -> Self {
+        Self {
+            collaborative: playlist.collaborative,
+            external_urls: playlist.external_urls,
+            id: playlist.id,
+            images: playlist.images,
+            name: playlist.name,
+            owner: playlist.owner,
+            public: playlist.public,
+            snapshot_id: playlist.snapshot_id,
+            tracks: Tracks { total: playlist.tracks.total },
+        }
+    }
+}
+
 /// A track inside a playlist.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlaylistTrack {
