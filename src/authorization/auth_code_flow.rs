@@ -34,6 +34,7 @@ fn random_state() -> String {
 ///
 /// [Reference](https://developer.spotify.com/documentation/general/guides/scopes/).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(missing_docs)]
 pub enum Scope {
     UgcImageUpload,
     UserReadPlaybackState,
@@ -51,11 +52,13 @@ pub enum Scope {
     UserLibraryRead,
     UserTopRead,
     UserReadRecentlyPlayed,
+    UserReadPlaybackPosition,
     UserFollowRead,
     UserFollowModify,
 }
 
 impl Scope {
+    /// Get the scope as a string.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::UgcImageUpload => "ugc-image-upload",
@@ -74,6 +77,7 @@ impl Scope {
             Self::UserLibraryRead => "user-library-read",
             Self::UserTopRead => "user-top-read",
             Self::UserReadRecentlyPlayed => "user-read-recently-played",
+            Self::UserReadPlaybackPosition => "user-read-playback-position",
             Self::UserFollowRead => "user-follow-read",
             Self::UserFollowModify => "user-follow-modify",
         }
@@ -315,9 +319,13 @@ impl From<String> for SpotifyRedirectError {
 /// An error generated from the `AuthCodeFlow::from_redirect` function.
 #[derive(Debug)]
 pub enum FromRedirectError {
+    /// The redirect URL was invalid.
     InvalidRedirect,
+    /// Parsing Spotify's response failed.
     ParseError(serde_json::error::Error),
+    /// The Spotify server failed.
     SpotifyError(SpotifyRedirectError),
+    /// An error occurred in the HTTP transport.
     HttpError(reqwest::Error),
 }
 

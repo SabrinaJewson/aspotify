@@ -16,6 +16,7 @@
 pub use albums::*;
 pub use artists::*;
 pub use browse::*;
+pub use episodes::*;
 pub use follow::*;
 use isocountry::CountryCode;
 pub use library::*;
@@ -23,6 +24,7 @@ pub use personalization::*;
 pub use player::*;
 pub use playlists::*;
 pub use search::*;
+pub use shows::*;
 pub use tracks::*;
 pub use users_profile::*;
 
@@ -96,12 +98,14 @@ macro_rules! request {
 pub mod albums;
 pub mod artists;
 pub mod browse;
+pub mod episodes;
 pub mod follow;
 pub mod library;
 pub mod personalization;
 pub mod player;
 pub mod playlists;
 pub mod search;
+pub mod shows;
 pub mod tracks;
 pub mod users_profile;
 

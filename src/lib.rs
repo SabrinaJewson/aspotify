@@ -25,6 +25,7 @@
 //! ).await.unwrap();
 //! # };
 //! ```
+#![warn(missing_docs)]
 
 pub mod authorization;
 pub mod endpoints;

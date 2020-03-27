@@ -40,6 +40,7 @@ pub async fn get_playback(
     Ok(Some(request!(
         token,
         GET "/v1/me/player",
+        query_params = {"additional_types": "episode,track"},
         optional_query_params = {"market": market.map(|m| m.as_str())},
         ret = CurrentPlayback,
         or_else = None
@@ -86,6 +87,7 @@ pub async fn get_playing_track(
     Ok(Some(request!(
         token,
         GET "/v1/me/player/currently-playing",
+        query_params = {"additional_types": "episode,track"},
         optional_query_params = {"market": market.map(|m| m.as_str())},
         ret = CurrentlyPlaying,
         or_else = None
@@ -221,12 +223,11 @@ pub async fn skip_prev(
 }
 
 /// Request to play something.
-///
-/// It either plays from a context (playlist, album or artist and track is not allowed) with a
-/// specified 0-indexed offset to start playing at, or plays a list of tracks.
 #[derive(Debug, Clone)]
 pub enum Play<'s, 'i> {
+    /// Play from a context (must not be track) with a specified 0-indexed offset to start playing at.
     Context(ItemType, &'i str, usize),
+    /// Play a list of tracks.
     Tracks(&'s [&'s str]),
 }
 
@@ -379,13 +380,12 @@ mod tests {
         assert_eq!(context.id, "3lBPyXvg1hhoJ1REnw80fZ");
         assert!(playback.currently_playing.progress.unwrap() >= Duration::from_secs(10));
         assert!(playback.currently_playing.is_playing);
-        let track = &playback.currently_playing.item.unwrap();
+        let track = match playback.currently_playing.item.unwrap() {
+            PlayingType::Track(item) => item,
+            _ => panic!(),
+        };
         assert_eq!(track.album.id, "3lBPyXvg1hhoJ1REnw80fZ");
         assert_eq!(track.track_number, 3);
-        assert_eq!(
-            playback.currently_playing.currently_playing_type,
-            TrackType::Track
-        );
 
         // Play "I am a Paleontologist" and "Ten Tonne Skeleton"
         play(
@@ -406,9 +406,11 @@ mod tests {
             .unwrap();
         assert!(playing.progress.unwrap() < Duration::from_secs(2));
         assert!(playing.is_playing);
-        let track = &playing.item.unwrap();
+        let track = match playing.item.unwrap() {
+            PlayingType::Track(item) => item,
+            _ => panic!(),
+        };
         assert_eq!(track.id, "2Wbz0QcXCVYmuBgOwUV6KU");
-        assert_eq!(playing.currently_playing_type, TrackType::Track);
 
         // Seek to 2ms before end
         seek(&token, Duration::from_millis(152106 - 2), None)
@@ -419,7 +421,14 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
-        assert_eq!(playing.item.unwrap().id, "0vjYxBDAcflD0358arIVZG");
+        assert_eq!(
+            match playing.item.unwrap() {
+                PlayingType::Track(item) => item,
+                _ => panic!(),
+            }
+            .id,
+            "0vjYxBDAcflD0358arIVZG"
+        );
 
         // Repeat, shuffle, volume
         set_repeat(&token, RepeatState::Track, None).await.unwrap();
@@ -454,7 +463,14 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
-        assert_eq!(playing.item.unwrap().id, "2Wbz0QcXCVYmuBgOwUV6KU");
+        assert_eq!(
+            match playing.item.unwrap() {
+                PlayingType::Track(item) => item,
+                _ => panic!(),
+            }
+            .id,
+            "2Wbz0QcXCVYmuBgOwUV6KU"
+        );
 
         // Skip next
         skip_next(&token, None).await.unwrap();
@@ -463,7 +479,14 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
-        assert_eq!(playing.item.unwrap().id, "0vjYxBDAcflD0358arIVZG");
+        assert_eq!(
+            match playing.item.unwrap() {
+                PlayingType::Track(item) => item,
+                _ => panic!(),
+            }
+            .id,
+            "0vjYxBDAcflD0358arIVZG"
+        );
 
         // Play from playlist
         play(

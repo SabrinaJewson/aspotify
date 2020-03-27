@@ -122,5 +122,6 @@ pub struct SavedTrack {
 /// The number of tracks an object contains.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Tracks {
+    /// The number of tracks.
     pub total: usize,
 }

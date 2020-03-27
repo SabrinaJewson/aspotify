@@ -88,7 +88,9 @@ impl From<UserPrivate> for UserSimplified {
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Subscription {
+    /// The user is subscribed to Spotify Premium.
     Premium,
+    /// The user isn't subscribed to Spotify Premium.
     #[serde(alias = "open")]
     Free,
 }

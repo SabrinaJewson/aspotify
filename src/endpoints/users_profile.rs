@@ -44,7 +44,10 @@ mod tests {
         );
         assert_eq!(user.id, "spotify");
         assert_eq!(user.images.len(), 1);
-        assert_eq!(user.images[0].url, "https://profile-images.scdn.co/images/userprofile/default/3c93d52857ecf3e40c4e8435adb7f9c1da40a0dd");
+        assert_eq!(
+            user.images[0].url,
+            "https://i.scdn.co/image/ab6775700000ee8555c25988a6ac314394d3fbf5"
+        );
     }
 
     #[tokio::test]

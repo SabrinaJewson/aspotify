@@ -8,6 +8,7 @@ use std::u64;
 /// reference](https://developer.spotify.com/documentation/web-api/reference/object-model/#audio-features-object)
 /// for more details on each on the items.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[allow(missing_docs)]
 pub struct AudioFeatures {
     /// The [Spotify ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
     /// for the track.
@@ -32,7 +33,9 @@ pub struct AudioFeatures {
 /// The mode of a track (major or minor).
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 pub enum Mode {
+    /// The track is major.
     Major,
+    /// The track is minor.
     Minor,
 }
 
@@ -197,6 +200,7 @@ pub struct TimeInterval {
 /// [here](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/#section-object)
 /// for more information.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[allow(missing_docs)]
 pub struct Section {
     /// The interval of the section.
     #[serde(flatten)]
@@ -220,6 +224,7 @@ pub struct Section {
 /// [here](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/#segment-object)
 /// for more information.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[allow(missing_docs)]
 pub struct Segment {
     /// The interval of the segment.
     #[serde(flatten)]

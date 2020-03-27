@@ -106,26 +106,34 @@ impl From<ArtistsAlbum> for AlbumSimplified {
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AlbumType {
+    /// An album.
     #[serde(alias = "ALBUM")]
     Album,
+    /// A single.
     #[serde(alias = "SINGLE")]
     Single,
+    /// A compilation album.
     #[serde(alias = "COMPILATION")]
     Compilation,
 }
 
-/// When getting all an artist's albums, if the artist didn't release the album but instead
-/// appeared on it, this is set to AppearsOn.
+/// Similar to AlbumType, but with an extra variant.
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AlbumGroup {
+    /// An album.
     Album,
+    /// A single.
     Single,
+    /// A compilation album.
     Compilation,
+    /// When getting all an artist's albums, if the artist didn't release the album but instead
+    /// appeared on it, it is this value.
     AppearsOn,
 }
 
 impl AlbumGroup {
+    /// Get the album's type as a string.
     pub fn as_str(self) -> &'static str {
         match self {
             AlbumGroup::Album => "album",

@@ -1,4 +1,4 @@
-use aspotify::{AuthCodeFlow, ClientCredentials, CurrentlyPlaying};
+use aspotify::{AuthCodeFlow, ClientCredentials, CurrentlyPlaying, PlayingType};
 
 #[tokio::main]
 async fn main() {
@@ -15,11 +15,18 @@ async fn main() {
 
     match playing {
         Some(CurrentlyPlaying {
-            item: Some(track), ..
-        }) => println!("Currently playing is: {}", track.name),
-        Some(CurrentlyPlaying { item: None, .. }) => {
-            println!("Currently playing an unknown track.")
+            item: Some(item), ..
+        }) => {
+            print!("Currently playing ");
+            match item {
+                PlayingType::Track(track) => print!("the track {}", track.name),
+                PlayingType::Episode(ep) => print!("the episode {}", ep.name),
+                PlayingType::Ad(ad) => print!("the advert {}", ad.name),
+                PlayingType::Unknown(item) => print!("an unknown track {}", item.name),
+            }
+            println!(".");
         }
+        Some(CurrentlyPlaying { item: None, .. }) => println!("Currently playing an unknown item."),
         None => println!("Nothing currently playing."),
     }
 }
