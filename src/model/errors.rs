@@ -144,9 +144,13 @@ impl SpotifyError for PlayerError {}
 /// An HTTP error or an error from the endpoint.
 #[derive(Debug)]
 pub enum EndpointError<E: SpotifyError> {
+    /// An error caused when sending the HTTP request.
     HttpError(reqwest::Error),
+    /// An error caused parsing the response
     ParseError(serde_json::error::Error),
+    /// An error caused by the Spotify server.
     SpotifyError(E),
+    /// Any other IO error.
     IoError(io::Error),
 }
 

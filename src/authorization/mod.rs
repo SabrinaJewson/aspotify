@@ -35,7 +35,9 @@ use std::time::{Duration, Instant};
 /// ```
 #[derive(Debug, Clone)]
 pub struct ClientCredentials {
+    /// The Client ID.
     pub id: String,
+    /// The Client Secret.
     pub secret: String,
 }
 
@@ -64,8 +66,10 @@ impl ClientCredentials {
 /// Generate these with CCFlow or AuthCodeFlow.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccessToken {
+    /// The token string.
     #[serde(rename = "access_token")]
     pub token: String,
+    /// When the token expires.
     #[serde(rename = "expires_in", with = "serde_instant_seconds")]
     pub expires: Instant,
 }

@@ -61,7 +61,9 @@ impl From<Playlist> for PlaylistSimplified {
             owner: playlist.owner,
             public: playlist.public,
             snapshot_id: playlist.snapshot_id,
-            tracks: Tracks { total: playlist.tracks.total },
+            tracks: Tracks {
+                total: playlist.tracks.total,
+            },
         }
     }
 }

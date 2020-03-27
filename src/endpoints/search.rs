@@ -37,6 +37,8 @@ pub async fn search(
             ItemType::Artist,
             ItemType::Playlist,
             ItemType::Track,
+            ItemType::Show,
+            ItemType::Episode,
         ]
     } else {
         types

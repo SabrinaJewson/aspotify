@@ -8,12 +8,14 @@ pub use artist::*;
 pub use device::*;
 pub use errors::*;
 pub use playlist::*;
+pub use show::*;
 pub use track::*;
 pub use user::*;
 
 use crate::util::*;
 use chrono::{DateTime, NaiveDate, Utc};
 use isocountry::CountryCode;
+use isolanguage_1::LanguageCode;
 use serde::{
     de::{self, Visitor},
     Deserialize, Deserializer, Serialize,
@@ -41,6 +43,7 @@ mod artist;
 mod device;
 mod errors;
 mod playlist;
+mod show;
 mod track;
 mod user;
 
@@ -150,6 +153,7 @@ pub struct CursorPage<T> {
 /// Object that contains the next CursorPage.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Cursor {
+    /// The cursor page after this one.
     pub after: Option<String>,
 }
 
@@ -167,7 +171,9 @@ pub struct TwoWayCursorPage<T> {
 /// Object that contains the next and previous CursorPage.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TwoWayCursor {
+    /// The cursor page after this one.
     pub after: Option<String>,
+    /// The cursor page before this one.
     pub before: Option<String>,
 }
 
@@ -200,6 +206,7 @@ pub struct RecommendationSeed {
 /// The context from which the recommendation was chosen; artist, track or genre.
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[allow(missing_docs)]
 pub enum SeedType {
     Artist,
     Track,
@@ -210,34 +217,44 @@ pub enum SeedType {
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DatePrecision {
+    /// The measurement is precise to the nearest year.
     Year,
+    /// The measurement is precise to the nearest month.
     Month,
+    /// The measurement is precise to the nearest day.
     Day,
 }
 
 /// Restrictions applied to a track due to markets.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Restrictions {
+    /// Why the restriction was applied.
     pub reason: String,
 }
 
 /// A type of item in the Spotify model.
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[allow(missing_docs)]
 pub enum ItemType {
     Album,
     Artist,
     Playlist,
     Track,
+    Show,
+    Episode,
 }
 
 impl ItemType {
+    /// The type of item as a string.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Album => "album",
             Self::Artist => "artist",
             Self::Playlist => "playlist",
             Self::Track => "track",
+            Self::Show => "show",
+            Self::Episode => "episode",
         }
     }
 }
@@ -245,8 +262,16 @@ impl ItemType {
 /// The results of a search.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SearchResults {
+    /// The resulting artists of the search.
     pub artists: Option<Page<Artist>>,
+    /// The resulting albums of the search.
     pub albums: Option<Page<AlbumSimplified>>,
+    /// The resulting tracks of the search.
     pub tracks: Option<Page<Track>>,
+    /// The resulting playlists of the search.
     pub playlists: Option<Page<PlaylistSimplified>>,
+    /// The resulting shows of the search.
+    pub shows: Option<Page<ShowSimplified>>,
+    /// The resulting episodes of the search.
+    pub episodes: Option<Page<EpisodeSimplified>>,
 }
