@@ -50,6 +50,25 @@ inherit_show_simplified!(
     }
 );
 
+impl From<Show> for ShowSimplified {
+    fn from(show: Show) -> Self {
+        Self {
+            available_markets: show.available_markets,
+            copyrights: show.copyrights,
+            description: show.description,
+            explicit: show.explicit,
+            external_urls: show.external_urls,
+            id: show.id,
+            images: show.images,
+            is_externally_hosted: show.is_externally_hosted,
+            languages: show.languages,
+            media_type: show.media_type,
+            name: show.name,
+            publisher: show.publisher,
+        }
+    }
+}
+
 /// Information about a show that has been saved.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SavedShow {
@@ -113,6 +132,27 @@ inherit_episode_simplified!(
         show: ShowSimplified,
     }
 );
+
+impl From<Episode> for EpisodeSimplified {
+    fn from(episode: Episode) -> Self {
+        Self {
+            audio_preview_url: episode.audio_preview_url,
+            description: episode.description,
+            duration: episode.duration,
+            explicit: episode.explicit,
+            external_urls: episode.external_urls,
+            id: episode.id,
+            images: episode.images,
+            is_externally_hosted: episode.is_externally_hosted,
+            is_playable: episode.is_playable,
+            languages: episode.languages,
+            name: episode.name,
+            release_date: episode.release_date,
+            release_date_precision: episode.release_date_precision,
+            resume_point: episode.resume_point,
+        }
+    }
+}
 
 /// A position to resume from in an object.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
