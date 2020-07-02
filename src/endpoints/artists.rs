@@ -176,8 +176,8 @@ mod tests {
         assert!(albums.items.iter().all(|album| album
             .artists
             .iter()
-            .find(|artist| artist.name == "Red Hot Chili Peppers")
-            .is_some()));
+            .any(|artist| artist.name == "Red Hot Chili Peppers")
+            ));
     }
 
     #[tokio::test]
@@ -192,7 +192,7 @@ mod tests {
         assert!(top.iter().all(|track| track
             .artists
             .iter()
-            .find(|artist| artist.name == "Red Hot Chili Peppers")
-            .is_some()));
+            .any(|artist| artist.name == "Red Hot Chili Peppers")
+            ));
     }
 }

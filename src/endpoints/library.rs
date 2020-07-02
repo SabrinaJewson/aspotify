@@ -259,8 +259,8 @@ mod tests {
         // Check
         let check = user_saved_albums(&token, albums).await.unwrap();
         let (save_check, unsave_check) = check.split_at(split);
-        assert!(save_check.into_iter().all(|&saved| saved));
-        assert!(unsave_check.into_iter().all(|&saved| !saved));
+        assert!(save_check.iter().all(|&saved| saved));
+        assert!(unsave_check.iter().all(|&saved| !saved));
 
         // Check by finding in list
         let saved = get_saved_albums(&token, 50, 0, None).await.unwrap();
@@ -312,8 +312,8 @@ mod tests {
         // Check
         let check = user_saved_shows(&token, shows).await.unwrap();
         let (save_check, unsave_check) = check.split_at(split);
-        assert!(save_check.into_iter().all(|&saved| saved));
-        assert!(unsave_check.into_iter().all(|&saved| !saved));
+        assert!(save_check.iter().all(|&saved| saved));
+        assert!(unsave_check.iter().all(|&saved| !saved));
 
         // Check by finding in list, only if it has them all
         let saved = get_saved_shows(&token, 50, 0).await.unwrap();
@@ -360,8 +360,8 @@ mod tests {
         // Check
         let check = user_saved_tracks(&token, tracks).await.unwrap();
         let (save_check, unsave_check) = check.split_at(split);
-        assert!(save_check.into_iter().all(|&saved| saved));
-        assert!(unsave_check.into_iter().all(|&saved| !saved));
+        assert!(save_check.iter().all(|&saved| saved));
+        assert!(unsave_check.iter().all(|&saved| !saved));
 
         // Check by finding in list, only if it has them all
         let saved = get_saved_tracks(&token, 50, 0, None).await.unwrap();

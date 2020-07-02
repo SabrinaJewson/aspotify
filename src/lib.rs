@@ -26,6 +26,7 @@
 //! # };
 //! ```
 #![warn(missing_docs)]
+#![cfg_attr(test, allow(clippy::float_cmp))]
 
 pub mod authorization;
 pub mod endpoints;
