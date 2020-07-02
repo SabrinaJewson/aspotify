@@ -261,8 +261,8 @@ mod tests {
         // Check
         let check = user_follows_artists(&token, artists).await.unwrap();
         let (follow_check, unfollow_check) = check.split_at(split);
-        assert!(follow_check.into_iter().all(|&followed| followed));
-        assert!(unfollow_check.into_iter().all(|&followed| !followed));
+        assert!(follow_check.iter().all(|&followed| followed));
+        assert!(unfollow_check.iter().all(|&followed| !followed));
 
         // Check by finding in list
         let followed = get_followed_artists(&token, 50, None).await.unwrap();

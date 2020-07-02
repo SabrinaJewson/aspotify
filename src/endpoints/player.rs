@@ -413,7 +413,7 @@ mod tests {
         assert_eq!(track.id, "2Wbz0QcXCVYmuBgOwUV6KU");
 
         // Seek to 2ms before end
-        seek(&token, Duration::from_millis(152106 - 2), None)
+        seek(&token, Duration::from_millis(152_106 - 2), None)
             .await
             .unwrap();
         time::delay_for(wait_time).await;
