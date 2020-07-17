@@ -1,246 +1,268 @@
-//! Endpoint functions relating to following and unfollowing artists, users and playlists.
+use std::fmt::Display;
 
-use crate::*;
+use itertools::Itertools;
+use reqwest::header;
 use serde::Deserialize;
 
-/// Check if the current user follows some artists.
-///
-/// Returns vector of bools that is in the same order as the given ids. Maximum 50 ids. Requires
-/// `user-follow-read`.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-current-user-follows/).
-pub async fn user_follows_artists(
-    token: &AccessToken,
-    ids: &[&str],
-) -> Result<Vec<bool>, EndpointError<Error>> {
-    if ids.is_empty() {
-        return Ok(Vec::new());
+use crate::{Artist, Client, CursorPage, Error, Response};
+
+/// Endpoint functions relating to following and unfollowing artists, users and playlists.
+#[derive(Debug, Clone, Copy)]
+pub struct Follow<'a>(pub &'a Client);
+
+impl Follow<'_> {
+    /// Check if the current user follows some artists.
+    ///
+    /// Returns vector of bools that is in the same order as the given ids. Maximum 50 ids. Requires
+    /// `user-follow-read`.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-current-user-follows/).
+    pub async fn user_follows_artists<I: Iterator>(
+        self,
+        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+    ) -> Result<Response<Vec<bool>>, Error>
+    where
+        I::Item: Display,
+    {
+        self.0
+            .send_json(
+                self.0
+                    .client
+                    .get(endpoint!("/v1/me/following/contains"))
+                    .query(&(("type", "artist"), ("ids", ids.into_iter().join(",")))),
+            )
+            .await
     }
 
-    Ok(request!(
-        token,
-        GET "/v1/me/following/contains",
-        query_params = {"type": "artist", "ids": &&ids.join(",")},
-        ret = Vec<bool>
-    ))
-}
-
-/// Check if the current user follows some users.
-///
-/// Return vector of bools that is in the same order as the given ids. Maximum 50 ids. Requires
-/// `user-follow-read`.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-current-user-follows/).
-pub async fn user_follows_users(
-    token: &AccessToken,
-    ids: &[&str],
-) -> Result<Vec<bool>, EndpointError<Error>> {
-    if ids.is_empty() {
-        return Ok(Vec::new());
+    /// Check if the current user follows some users.
+    ///
+    /// Return vector of bools that is in the same order as the given ids. Maximum 50 ids. Requires
+    /// `user-follow-read`.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-current-user-follows/).
+    pub async fn user_follows_users<I: Iterator>(
+        self,
+        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+    ) -> Result<Response<Vec<bool>>, Error>
+    where
+        I::Item: Display,
+    {
+        self.0
+            .send_json(
+                self.0
+                    .client
+                    .get(endpoint!("/v1/me/following/contains"))
+                    .query(&(("type", "user"), ("ids", ids.into_iter().join(",")))),
+            )
+            .await
     }
 
-    Ok(request!(
-        token,
-        GET "/v1/me/following/contains",
-        query_params = {"type": "user", "ids": &&ids.join(",")},
-        ret = Vec<bool>
-    ))
-}
-
-/// Check if some users follow a playlist.
-///
-/// `id` is the id of the playlist and `user_ids` is the users who you want to check, maximum 5.
-/// Users can publicly or privately follow playlists; checking whether a user privately follows a
-/// playlist requires `playlist-read-private`.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-user-following-playlist/).
-pub async fn users_follow_playlist(
-    token: &AccessToken,
-    id: &str,
-    user_ids: &[&str],
-) -> Result<Vec<bool>, EndpointError<Error>> {
-    if user_ids.is_empty() {
-        return Ok(Vec::new());
+    /// Check if some users follow a playlist.
+    ///
+    /// `id` is the id of the playlist and `user_ids` is the users who you want to check, maximum 5.
+    /// Users can publicly or privately follow playlists; checking whether a user privately follows a
+    /// playlist requires `playlist-read-private`.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-user-following-playlist/).
+    pub async fn users_follow_playlist<I: Iterator>(
+        self,
+        id: &str,
+        user_ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+    ) -> Result<Response<Vec<bool>>, Error>
+    where
+        I::Item: Display,
+    {
+        self.0
+            .send_json(
+                self.0
+                    .client
+                    .get(endpoint!("/v1/playlists/{}/followers/contains", id))
+                    .query(&(("ids", user_ids.into_iter().join(",")),)),
+            )
+            .await
     }
 
-    Ok(request!(
-        token,
-        GET "/v1/playlists/{}/followers/contains",
-        path_params = [id],
-        query_params = {"ids": &&user_ids.join(",")},
-        ret = Vec<bool>
-    ))
-}
-
-/// Follow artists.
-///
-/// Maximum 50 ids. Requires `user-follow-modify`.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/).
-pub async fn follow_artists(token: &AccessToken, ids: &[&str]) -> Result<(), EndpointError<Error>> {
-    if ids.is_empty() {
-        return Ok(());
+    /// Follow artists.
+    ///
+    /// Maximum 50 ids. Requires `user-follow-modify`.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/).
+    pub async fn follow_artists<I: Iterator>(
+        self,
+        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+    ) -> Result<(), Error>
+    where
+        I::Item: Display,
+    {
+        self.0
+            .send_empty(
+                self.0
+                    .client
+                    .put(endpoint!("/v1/me/following"))
+                    .query(&(("type", "artist"), ("ids", ids.into_iter().join(","))))
+                    .body("{}"),
+            )
+            .await
     }
 
-    request!(
-        token,
-        PUT "/v1/me/following",
-        query_params = {"type": "artist", "ids": &ids.join(",")},
-        body = "{}"
-    );
-    Ok(())
-}
-
-/// Follow users.
-///
-/// Maximum 50 ids. Requires `user-follow-modify`.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/).
-pub async fn follow_users(token: &AccessToken, ids: &[&str]) -> Result<(), EndpointError<Error>> {
-    if ids.is_empty() {
-        return Ok(());
+    /// Follow users.
+    ///
+    /// Maximum 50 ids. Requires `user-follow-modify`.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/).
+    pub async fn follow_users<I: Iterator>(
+        self,
+        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+    ) -> Result<(), Error>
+    where
+        I::Item: Display,
+    {
+        self.0
+            .send_empty(
+                self.0
+                    .client
+                    .put(endpoint!("/v1/me/following"))
+                    .query(&(("type", "user"), ("ids", ids.into_iter().join(","))))
+                    .body("{}"),
+            )
+            .await
     }
 
-    request!(
-        token,
-        PUT "/v1/me/following",
-        query_params = {"type": "user", "ids": &ids.join(",")},
-        body = "{}"
-    );
-    Ok(())
-}
-
-/// Follow a playlist publicly.
-///
-/// Requires `playlist-modify-public`.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-playlist/).
-pub async fn follow_playlist_public(
-    token: &AccessToken,
-    id: &str,
-) -> Result<(), EndpointError<Error>> {
-    request!(
-        token,
-        PUT "/v1/playlists/{}/followers",
-        path_params = [id],
-        header_params = {"Content-Type": "application/json"},
-        body = "{\"public\": true}"
-    );
-    Ok(())
-}
-
-/// Follow a playlist privately.
-///
-/// Requires `playlist-modify-private`.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-playlist/).
-pub async fn follow_playlist_private(
-    token: &AccessToken,
-    id: &str,
-) -> Result<(), EndpointError<Error>> {
-    request!(
-        token,
-        PUT "/v1/playlists/{}/followers",
-        path_params = [id],
-        header_params = {"Content-Type": "application/json"},
-        body = "{\"public\": false}"
-    );
-    Ok(())
-}
-
-/// Get followed artists.
-///
-/// Limit must be in the range [1..50]. `after` is the Cursor value given the previous time this
-/// endpoint was called. It is used to get the next page of items.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/get-followed/).
-pub async fn get_followed_artists(
-    token: &AccessToken,
-    limit: usize,
-    after: Option<&str>,
-) -> Result<CursorPage<Artist>, EndpointError<Error>> {
-    #[derive(Deserialize)]
-    struct Response {
-        artists: CursorPage<Artist>,
-    };
-
-    Ok(request!(
-        token,
-        GET "/v1/me/following",
-        query_params = {"type": "artist", "limit": &limit.to_string()},
-        optional_query_params = {"after": after},
-        ret = Response
-    )
-    .artists)
-}
-
-/// Unfollow artists.
-///
-/// Maximum 50 ids. Requires `user-follow-modify`.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/).
-pub async fn unfollow_artists(
-    token: &AccessToken,
-    ids: &[&str],
-) -> Result<(), EndpointError<Error>> {
-    if ids.is_empty() {
-        return Ok(());
+    /// Follow a playlist publicly.
+    ///
+    /// Requires `playlist-modify-public`.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-playlist/).
+    pub async fn follow_playlist_public(self, id: &str) -> Result<(), Error> {
+        self.0
+            .send_empty(
+                self.0
+                    .client
+                    .put(endpoint!("/v1/playlists/{}/followers", id))
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(r#"{"public":true}"#),
+            )
+            .await
     }
 
-    request!(
-        token,
-        DELETE "/v1/me/following",
-        query_params = {"type": "artist", "ids": &ids.join(",")},
-        body = "{}"
-    );
-    Ok(())
-}
-
-/// Unfollow users.
-///
-/// Maximum 50 ids. Requires `user-follow-modify`.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/).
-pub async fn unfollow_users(token: &AccessToken, ids: &[&str]) -> Result<(), EndpointError<Error>> {
-    if ids.is_empty() {
-        return Ok(());
+    /// Follow a playlist privately.
+    ///
+    /// Requires `playlist-modify-private`.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-playlist/).
+    pub async fn follow_playlist_private(self, id: &str) -> Result<(), Error> {
+        self.0
+            .send_empty(
+                self.0
+                    .client
+                    .put(endpoint!("/v1/playlists/{}/followers", id))
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(r#"{"public":false}"#),
+            )
+            .await
     }
 
-    request!(
-        token,
-        DELETE "/v1/me/following",
-        query_params = {"type": "user", "ids": &ids.join(",")},
-        body = "{}"
-    );
-    Ok(())
-}
+    /// Get followed artists.
+    ///
+    /// Limit must be in the range [1..50]. `after` is the Cursor value given the previous time this
+    /// endpoint was called. It is used to get the next page of items.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/get-followed/).
+    pub async fn get_followed_artists(
+        self,
+        limit: usize,
+        after: Option<&str>,
+    ) -> Result<Response<CursorPage<Artist>>, Error> {
+        #[derive(Deserialize)]
+        struct Response {
+            artists: CursorPage<Artist>,
+        };
 
-/// Unfollow a playlist.
-///
-/// If the user follows it publicly you need `playlist-modify-public`, if the user follows it
-/// privately you need `playlist-modiy-private`.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-playlist/).
-pub async fn unfollow_playlist(token: &AccessToken, id: &str) -> Result<(), EndpointError<Error>> {
-    request!(
-        token,
-        DELETE "/v1/playlists/{}/followers",
-        path_params = [id],
-        body = "{}"
-    );
-    Ok(())
+        Ok(self
+            .0
+            .send_json::<Response>(self.0.client.get(endpoint!("/v1/me/following")).query(&(
+                ("type", "artist"),
+                ("limit", limit.to_string()),
+                after.map(|after| ("after", after)),
+            )))
+            .await?
+            .map(|res| res.artists))
+    }
+
+    /// Unfollow artists.
+    ///
+    /// Maximum 50 ids. Requires `user-follow-modify`.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/).
+    pub async fn unfollow_artists<I: Iterator>(
+        self,
+        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+    ) -> Result<(), Error>
+    where
+        I::Item: Display,
+    {
+        self.0
+            .send_empty(
+                self.0
+                    .client
+                    .delete(endpoint!("/v1/me/following"))
+                    .query(&(("type", "artist"), ("ids", ids.into_iter().join(","))))
+                    .body("{}"),
+            )
+            .await
+    }
+
+    /// Unfollow users.
+    ///
+    /// Maximum 50 ids. Requires `user-follow-modify`.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/).
+    pub async fn unfollow_users<I: Iterator>(
+        self,
+        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+    ) -> Result<(), Error>
+    where
+        I::Item: Display,
+    {
+        self.0
+            .send_empty(
+                self.0
+                    .client
+                    .delete(endpoint!("/v1/me/following"))
+                    .query(&(("type", "users"), ("ids", ids.into_iter().join(","))))
+                    .body("{}"),
+            )
+            .await
+    }
+
+    /// Unfollow a playlist.
+    ///
+    /// If the user follows it publicly you need `playlist-modify-public`, if the user follows it
+    /// privately you need `playlist-modiy-private`.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-playlist/).
+    pub async fn unfollow_playlist(self, id: &str) -> Result<(), Error> {
+        self.0
+            .send_empty(
+                self.0
+                    .client
+                    .delete(endpoint!("/v1/playlists/{}/followers", id))
+                    .body("{}"),
+            )
+            .await
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::token;
-    use crate::*;
+    use crate::endpoints::client;
 
     #[tokio::test]
     async fn test_follow_artists() {
         // NOTE: This test only works if you follow < 49 artists as it only requests the first page.
         // You also must not follow Lemon Demon.
-        let token = token().await;
+        let client = client();
+        let follow = client.follow();
 
         // TOTO, Eminem and Lemon Demon
         let artists = &[
@@ -252,20 +274,20 @@ mod tests {
         let (followed_artists, unfollowed_artists) = artists.split_at(split);
 
         // Store old
-        let old = user_follows_artists(&token, artists).await.unwrap();
+        let old = follow.user_follows_artists(artists).await.unwrap().data;
 
         // Following and unfollowing
-        follow_artists(&token, followed_artists).await.unwrap();
-        unfollow_artists(&token, unfollowed_artists).await.unwrap();
+        follow.follow_artists(followed_artists).await.unwrap();
+        follow.unfollow_artists(unfollowed_artists).await.unwrap();
 
         // Check
-        let check = user_follows_artists(&token, artists).await.unwrap();
+        let check = follow.user_follows_artists(artists).await.unwrap().data;
         let (follow_check, unfollow_check) = check.split_at(split);
         assert!(follow_check.iter().all(|&followed| followed));
         assert!(unfollow_check.iter().all(|&followed| !followed));
 
         // Check by finding in list
-        let followed = get_followed_artists(&token, 50, None).await.unwrap();
+        let followed = follow.get_followed_artists(50, None).await.unwrap().data;
         if followed.total <= 50 {
             for followed_artist in followed_artists {
                 assert!(followed
@@ -292,28 +314,43 @@ mod tests {
             }
             .push(artists[i]);
         }
-        follow_artists(&token, &old_followed).await.unwrap();
-        unfollow_artists(&token, &old_unfollowed).await.unwrap();
+        if !old_followed.is_empty() {
+            follow.follow_artists(&old_followed).await.unwrap();
+        }
+        if !old_unfollowed.is_empty() {
+            follow.unfollow_artists(&old_unfollowed).await.unwrap();
+        }
     }
 
     #[tokio::test]
     async fn test_follow_playlists() {
-        let token = token().await;
+        let client = client();
+        let follow = client.follow();
 
         // Follow "Sing-Along Indie Hits" playlist
-        follow_playlist_public(&token, "37i9dQZF1DWYBF1dYDPlHw")
+        follow
+            .follow_playlist_public("37i9dQZF1DWYBF1dYDPlHw")
             .await
             .unwrap();
 
         // Check whether following playlist
-        let id = get_current_user(&token).await.unwrap().id;
-        let followers = users_follow_playlist(&token, "37i9dQZF1DWYBF1dYDPlHw", &["spotify", &id])
+        let id = client
+            .users_profile()
+            .get_current_user()
             .await
-            .unwrap();
+            .unwrap()
+            .data
+            .id;
+        let followers = follow
+            .users_follow_playlist("37i9dQZF1DWYBF1dYDPlHw", &["spotify", &id])
+            .await
+            .unwrap()
+            .data;
         assert_eq!(followers, &[false, true]);
 
         // Unfollow
-        unfollow_playlist(&token, "37i9dQZF1DWYBF1dYDPlHw")
+        follow
+            .unfollow_playlist("37i9dQZF1DWYBF1dYDPlHw")
             .await
             .unwrap();
     }

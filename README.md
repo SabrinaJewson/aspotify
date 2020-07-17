@@ -29,9 +29,6 @@ successfully, you should see a file called `.refresh_token` in your crate root. 
 refresh token that will be used to run all the tests. For more infomation about this process, see
 `examples/refresh_file.rs`.
 
-`aspotify` currently uses a global Client internally. This means that it cannot work from multiple
-executors at once. This does not effect most binaries, but tests must be run with
-`-- --test-threads=1`.
-
 These tests will make temporary changes to your account, however they will all be reverted. You will
-also need an unrestricted non-private Spotify client open to get all the tests to run successfully.
+also need an unrestricted non-private Spotify client open to get all the tests to run successfully,
+and you must not have any songs in your queue.

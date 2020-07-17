@@ -1,4 +1,8 @@
-use crate::model::*;
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::model::{Followers, Image, TypeUser};
 
 macro_rules! inherit_user_simplified {
     ($(#[$attr:meta])* $name:ident { $($(#[$f_attr:meta])* $f_name:ident : $f_ty:ty,)* }) => {
@@ -15,6 +19,9 @@ macro_rules! inherit_user_simplified {
             /// ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids) for the
             /// user.
             id: String,
+            /// The item type; `user`.
+            #[serde(rename = "type")]
+            item_type: TypeUser,
         });
     }
 }
@@ -49,7 +56,8 @@ inherit_user_public!(
     /// flow.
     UserPrivate {
         /// The country of the user, as set in their account profile. Requires `user-read-private`.
-        country: Option<CountryCode>,
+        /// This is an ISO 3166 2-letter country code.
+        country: Option<String>,
         /// The user's email address, which is not necessarily a real email address. Requires
         /// `user-read-email`.
         email: Option<String>,
@@ -64,6 +72,7 @@ impl From<UserPublic> for UserSimplified {
             display_name: user.display_name,
             external_urls: user.external_urls,
             id: user.id,
+            item_type: TypeUser,
         }
     }
 }
@@ -75,6 +84,7 @@ impl From<UserPrivate> for UserPublic {
             id: user.id,
             followers: user.followers,
             images: user.images,
+            item_type: TypeUser,
         }
     }
 }
@@ -90,7 +100,7 @@ impl From<UserPrivate> for UserSimplified {
 pub enum Subscription {
     /// The user is subscribed to Spotify Premium.
     Premium,
-    /// The user isn't subscribed to Spotify Premium.
+    /// The user isn't subscribed to Spotify Premium. Also known as `open`.
     #[serde(alias = "open")]
     Free,
 }

@@ -2,9 +2,12 @@
 //! Model](https://developer.spotify.com/documentation/web-api/reference/object-model/), in
 //! deserializable Rust structures.
 
+use serde::{Deserialize, Serialize};
+
 pub use album::*;
 pub use analysis::*;
 pub use artist::*;
+pub use consts::*;
 pub use device::*;
 pub use errors::*;
 pub use playlist::*;
@@ -12,22 +15,10 @@ pub use show::*;
 pub use track::*;
 pub use user::*;
 
-use crate::util::*;
-use chrono::{DateTime, NaiveDate, Utc};
-use isocountry::CountryCode;
-use isolanguage_1::LanguageCode;
-use serde::{
-    de::{self, Visitor},
-    Deserialize, Deserializer, Serialize,
-};
-use std::collections::HashMap;
-use std::fmt::{self, Formatter};
-use std::time::Duration;
-
 macro_rules! to_struct {
     ($(#[$attr:meta])* $name:ident { $($(#[$f_attr:meta])* $f_name:ident : $f_ty:ty,)* }) => {
         $(#[$attr])*
-        #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, Deserialize)]
+        #[derive(Debug, Clone, PartialEq, Eq, ::serde::Serialize, ::serde::Deserialize)]
         pub struct $name {
             $(
                 $(#[$f_attr])*
@@ -46,6 +37,66 @@ mod playlist;
 mod show;
 mod track;
 mod user;
+
+/// Serialization and deserialization constants.
+pub mod consts {
+    use std::fmt::{self, Formatter};
+
+    use serde::de::{self, Deserialize, Deserializer, Visitor};
+    use serde::ser::{Serialize, Serializer};
+
+    macro_rules! serde_string_consts {
+        ($($name:ident = $value:literal $svalue:expr,)*) => {
+            $(
+                #[doc = "The string `"]
+                #[doc = $svalue]
+                #[doc = "`."]
+                #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+                pub struct $name;
+
+                impl<'de> Deserialize<'de> for $name {
+                    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+                        struct ValueVisitor;
+                        impl<'de> Visitor<'de> for ValueVisitor {
+                            type Value = $name;
+                            fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+                                f.write_str(concat!("the string ", $svalue))
+                            }
+                            fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
+                                if v != $value {
+                                    return Err(E::invalid_value(de::Unexpected::Str(v), &self));
+                                }
+                                Ok($name)
+                            }
+                        }
+
+                        deserializer.deserialize_str(ValueVisitor)
+                    }
+                }
+
+                impl Serialize for $name {
+                    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                        serializer.serialize_str($value)
+                    }
+                }
+            )*
+        };
+        ($($name:ident = $value:literal,)*) => {
+            serde_string_consts!($($name = $value stringify!($value),)*);
+        };
+    }
+
+    serde_string_consts! {
+        TypeAlbum = "album",
+        TypeArtist = "artist",
+        TypeAudioFeatures = "audio_features",
+        TypeEpisode = "episode",
+        TypePlaylist = "playlist",
+        TypeShow = "show",
+        TypeTrack = "track",
+        TypeUser = "user",
+    }
+}
 
 /// A category of music, for example "Mood", "Top Lists", "Workout", et cetera.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -150,7 +201,7 @@ pub struct CursorPage<T> {
     pub total: usize,
 }
 
-/// Object that contains the next CursorPage.
+/// Object that contains the next `CursorPage`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Cursor {
     /// The cursor page after this one.
@@ -168,7 +219,7 @@ pub struct TwoWayCursorPage<T> {
     pub cursors: TwoWayCursor,
 }
 
-/// Object that contains the next and previous CursorPage.
+/// Object that contains the next and previous `CursorPage`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TwoWayCursor {
     /// The cursor page after this one.
@@ -247,6 +298,7 @@ pub enum ItemType {
 
 impl ItemType {
     /// The type of item as a string.
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Album => "album",

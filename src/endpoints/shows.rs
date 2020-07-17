@@ -1,114 +1,138 @@
-//! Endpoint functions relating to shows.
-//!
-//! For all the below endpoints, the market parameter must be specified if the token is not a
-//! user's. If the token is a user's and the market parameter is specified, the user's token will
-//! take precedence.
-//!
-//! **Note**: The `get_show` and `get_shows` endpoints can break in some cases due to an
-//! undocumented feature in the Spotify API. In particular, the Spotify API claims to return ISO 639
-//! language codes as the languages, however in practice it returns something different.
+use std::fmt::Display;
 
-use crate::*;
+use isocountry::CountryCode;
+use itertools::Itertools;
 use serde::Deserialize;
 
-/// Get information about a show.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/shows/get-a-show/).
-pub async fn get_show(
-    token: &AccessToken,
-    id: &str,
-    market: Option<CountryCode>,
-) -> Result<Show, EndpointError<Error>> {
-    Ok(request!(
-        token,
-        GET "/v1/shows/{}",
-        path_params = [id],
-        optional_query_params = {"market": market.map(|m| m.alpha2())},
-        ret = Show
-    ))
-}
+use crate::{Client, EpisodeSimplified, Error, Page, Response, Show, ShowSimplified};
 
-/// Get several shows.
+/// Endpoint functions relating to shows.
 ///
-/// In theory, this endpoint should return `Show`s; however, in practice it returns
-/// `ShowSimplified`s.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/shows/get-several-shows/).
-pub async fn get_shows(
-    token: &AccessToken,
-    ids: &[&str],
-    market: Option<CountryCode>,
-) -> Result<Vec<ShowSimplified>, EndpointError<Error>> {
-    if ids.is_empty() {
-        return Ok(Vec::new());
+/// For all the below endpoints, the market parameter must be specified if the token is not a
+/// user's. If the token is a user's and the market parameter is specified, the user's token will
+/// take precedence.
+#[derive(Debug, Clone, Copy)]
+pub struct Shows<'a>(pub &'a Client);
+
+impl Shows<'_> {
+    /// Get information about a show.
+    ///
+    /// Either the client must have a refresh token or the `market` parameter must be provided,
+    /// otherwise this will fail. If both are provided, then the user's market will take
+    /// precendence.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/shows/get-a-show/).
+    pub async fn get_show(
+        self,
+        id: &str,
+        market: Option<CountryCode>,
+    ) -> Result<Response<Show>, Error> {
+        self.0
+            .send_json(
+                self.0
+                    .client
+                    .get(endpoint!("/v1/shows/{}", id))
+                    .query(&(market.map(|c| ("market", c.alpha2())),)),
+            )
+            .await
     }
 
-    #[derive(Deserialize)]
-    struct Shows {
-        shows: Vec<ShowSimplified>,
+    /// Get several shows.
+    ///
+    /// Either the client must have a refresh token or the `market` parameter must be provided,
+    /// otherwise this will fail. If both are provided, then the user's market will take
+    /// precendence.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/shows/get-several-shows/).
+    pub async fn get_shows<I: Iterator>(
+        self,
+        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        market: Option<CountryCode>,
+    ) -> Result<Response<Vec<ShowSimplified>>, Error>
+    where
+        I::Item: Display,
+    {
+        #[derive(Deserialize)]
+        struct Shows {
+            shows: Vec<ShowSimplified>,
+        }
+
+        Ok(self
+            .0
+            .send_json::<Shows>(self.0.client.get(endpoint!("/v1/shows")).query(&(
+                ("ids", ids.into_iter().join(",")),
+                market.map(|c| ("market", c.alpha2())),
+            )))
+            .await?
+            .map(|res| res.shows))
     }
 
-    Ok(request!(
-        token,
-        GET "/v1/shows",
-        query_params = {"ids": ids.join(",")},
-        optional_query_params = {"market": market.map(|m| m.alpha2())},
-        ret = Shows
-    )
-    .shows)
-}
-
-/// Get a show's episodes.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/shows/get-shows-episodes/).
-pub async fn get_show_episodes(
-    token: &AccessToken,
-    id: &str,
-    limit: usize,
-    offset: usize,
-    market: Option<CountryCode>,
-) -> Result<Page<EpisodeSimplified>, EndpointError<Error>> {
-    Ok(request!(
-        token,
-        GET "/v1/shows/{}/episodes",
-        path_params = [id],
-        query_params = {"limit": limit, "offset": offset},
-        optional_query_params = {"market": market.map(|m| m.alpha2())},
-        ret = Page<EpisodeSimplified>
-    ))
+    /// Get a show's episodes.
+    ///
+    /// Either the client must have a refresh token or the `market` parameter must be provided,
+    /// otherwise this will fail. If both are provided, then the user's market will take
+    /// precendence.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/shows/get-shows-episodes/).
+    pub async fn get_show_episodes(
+        self,
+        id: &str,
+        limit: usize,
+        offset: usize,
+        market: Option<CountryCode>,
+    ) -> Result<Response<Page<EpisodeSimplified>>, Error> {
+        self.0
+            .send_json(
+                self.0
+                    .client
+                    .get(endpoint!("/v1/shows/{}/episodes", id))
+                    .query(&(
+                        ("limit", limit.to_string()),
+                        ("offset", offset.to_string()),
+                        market.map(|c| ("market", c.alpha2())),
+                    )),
+            )
+            .await
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::token;
-    use crate::*;
+    use isocountry::CountryCode;
+
+    use crate::endpoints::client;
 
     #[tokio::test]
     async fn test_get_show() {
-        let show = get_show(
-            &token().await,
-            "38bS44xjbVVZ3No3ByF1dJ",
-            Some(CountryCode::AUS),
-        )
-        .await
-        .unwrap();
+        let show = client()
+            .shows()
+            .get_show("38bS44xjbVVZ3No3ByF1dJ", Some(CountryCode::AUS))
+            .await
+            .unwrap()
+            .data;
         assert_eq!(show.name, "Vetenskapsradion Historia");
     }
 
     #[tokio::test]
     async fn test_get_shows() {
-        let shows = get_shows(&token().await, &["5CfCWKI5pZ28U0uOzXkDHe"], None)
+        let shows = client()
+            .shows()
+            .get_shows(&["5CfCWKI5pZ28U0uOzXkDHe"], None)
             .await
-            .unwrap();
+            .unwrap()
+            .data;
         assert_eq!(shows.len(), 1);
         assert_eq!(shows[0].name, "Without Fail");
     }
 
     #[tokio::test]
     async fn test_get_show_episodes() {
-        let episodes = get_show_episodes(&token().await, "38bS44xjbVVZ3No3ByF1dJ", 2, 1, None)
+        let episodes = client()
+            .shows()
+            .get_show_episodes("38bS44xjbVVZ3No3ByF1dJ", 2, 1, None)
             .await
-            .unwrap();
+            .unwrap()
+            .data;
         assert_eq!(episodes.limit, 2);
         assert_eq!(episodes.offset, 1);
         assert_eq!(episodes.items.len(), 2);

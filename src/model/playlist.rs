@@ -1,4 +1,10 @@
-use crate::model::*;
+use std::collections::HashMap;
+use std::fmt::Display;
+
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
+use crate::model::{Episode, Followers, Image, Page, Track, Tracks, TypePlaylist, UserSimplified};
 
 macro_rules! inherit_playlist_simplified {
     ($(#[$attr:meta])* $name:ident { $($(#[$f_attr:meta])* $f_name:ident : $f_ty:ty,)* }) => {
@@ -27,6 +33,9 @@ macro_rules! inherit_playlist_simplified {
             public: Option<bool>,
             /// The version identifier of the playlist.
             snapshot_id: String,
+            /// The item type; `playlist`.
+            #[serde(rename = "type")]
+            item_type: TypePlaylist,
         });
     }
 }
@@ -45,8 +54,8 @@ inherit_playlist_simplified!(
         description: Option<String>,
         /// The followers of the playlist.
         followers: Followers,
-        /// Information about the tracks of the playlist.
-        tracks: Page<PlaylistTrack>,
+        /// Information about the tracks and episodes of the playlist.
+        tracks: Page<PlaylistItem>,
     }
 );
 
@@ -64,22 +73,44 @@ impl From<Playlist> for PlaylistSimplified {
             tracks: Tracks {
                 total: playlist.tracks.total,
             },
+            item_type: TypePlaylist,
         }
     }
 }
 
-/// A track inside a playlist.
+/// Information about an item inside a playlist.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct PlaylistTrack {
-    /// The date and time that the track was added. Some very old playlists might have None.
+pub struct PlaylistItem {
+    /// The date and time that the item was added. Some very old playlists might have None.
     pub added_at: Option<DateTime<Utc>>,
-    /// The Spotify user who added the track. Some very old playlists might have None. This is a
+    /// The Spotify user who added the item. Some very old playlists might have None. This is a
     /// UserPublic according to the documentation, but in practice it is not.
     pub added_by: Option<UserSimplified>,
-    /// Whether the track is a local file or not.
+    /// Whether the item is a local file or not.
     pub is_local: bool,
-    /// Information about the track.
-    pub track: Track,
+    /// The item itself.
+    #[serde(rename = "track")]
+    pub item: PlaylistItemType<Track, Episode>,
+}
+
+/// The types of item that can go in a playlist.
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PlaylistItemType<T, E> {
+    /// A track.
+    Track(T),
+    /// An episode.
+    Episode(E),
+}
+
+impl<T: Display, E: Display> PlaylistItemType<T, E> {
+    /// Formats a Spotify URI using the `Display` implementations of the track and episode types.
+    pub fn uri(&self) -> String {
+        match self {
+            Self::Track(track) => format!("spotify:track:{}", track),
+            Self::Episode(episode) => format!("spotify:episode:{}", episode),
+        }
+    }
 }
 
 /// A list of featured playlists, and a message.

@@ -1,7 +1,7 @@
 [package]
 name = "aspotify"
 description = "Asynchronous client for the Spotify API"
-version = "0.3.2"
+version = "0.4.0"
 readme = "README.md"
 repository = "https://github.com/KaiJewson/aspotify"
 keywords = ["Spotify", "API", "Asynchronous"]
@@ -11,18 +11,26 @@ authors = ["KaiJewson <58880148+KaiJewson@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-reqwest = "0.10.4"
-tokio = { version = "0.2.13", features = ["time"] }
-serde = { version = "1.0.105", features = ["derive"] }
+reqwest = { version = "0.10.6", features = ["json"] }
+# reqwest doesn't re-export url::{ParseError, Position}
+url = "2.1.1"
+# For Mutex and Delay
+tokio = { version = "0.2.21", features = ["time"] }
+# Serde
+serde = { version = "1.0.114", features = ["derive"] }
 serde_millis = "0.1.1"
+serde_json = "1.0.48"
+# Datatypes used in the Spotify schema
 chrono = { version = "0.4.11", features = ["serde"] }
-lazy_static = "1.4.0"
 isocountry = "0.2.0"
 isolanguage-1 = { version = "0.1.0", features = ["serde_support"] }
+# For generating random state
 rand = "0.7.3"
-serde_json = "1.0.48"
-base64 = "0.12.0"
+# For encoding playlist cover images
+base64 = "0.12.3"
+# For joining iterators of T: Display with strings
+itertools = "0.9.0"
 
 [dev-dependencies]
 dotenv = "0.15.0"
-tokio = { version = "0.2.13", features = ["time", "macros"] }
+tokio = { version = "0.2.21", features = ["time", "macros"] }

@@ -1,18 +1,20 @@
-use aspotify::{AuthCodeFlow, ClientCredentials, CurrentlyPlaying, PlayingType};
+use aspotify::{Client, ClientCredentials, CurrentlyPlaying, PlayingType};
 
 #[tokio::main]
 async fn main() {
+    // Read the client credentials from the .env file
     dotenv::dotenv().unwrap();
 
-    let flow = AuthCodeFlow::from_refresh(
+    // Make the Spotify client
+    let client = Client::with_refresh(
         ClientCredentials::from_env().unwrap(),
         std::fs::read_to_string(".refresh_token").unwrap(),
     );
 
-    let playing = aspotify::get_playing_track(&flow.send().await.unwrap(), None)
-        .await
-        .unwrap();
+    // Call the Spotify API to get the playing track
+    let playing = client.player().get_playing_track(None).await.unwrap().data;
 
+    // Print out the results
     match playing {
         Some(CurrentlyPlaying {
             item: Some(item), ..

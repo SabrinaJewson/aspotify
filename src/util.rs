@@ -1,55 +1,39 @@
-// Useful ser/de functions
+//! Useful serialization and deserialization functions.
+
+use std::fmt::{self, Formatter};
+use std::time::{Duration, Instant};
 
 use chrono::NaiveDate;
 use serde::de::{self, Deserializer, Unexpected, Visitor};
-use std::fmt::{self, Formatter};
+use serde::Deserialize;
 
-pub(crate) mod serde_instant_seconds {
-    use serde::{
-        de::{self, Visitor},
-        Deserializer, Serializer,
-    };
-    use std::fmt::{self, Formatter};
-    use std::time::{Duration, Instant};
+pub(crate) fn deserialize_instant_seconds<'de, D>(deserializer: D) -> Result<Instant, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct Expires;
 
-    pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<Instant, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct Expires;
-
-        impl<'de> Visitor<'de> for Expires {
-            type Value = Instant;
-            fn expecting(&self, f: &mut Formatter) -> fmt::Result {
-                write!(f, "number of seconds until the token expires")
-            }
-            fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
-                Ok(Instant::now() + Duration::from_secs(v))
-            }
+    impl<'de> Visitor<'de> for Expires {
+        type Value = Instant;
+        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+            write!(f, "number of seconds until the token expires")
         }
-
-        deserializer.deserialize_u64(Expires)
+        fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
+            Ok(Instant::now() + Duration::from_secs(v))
+        }
     }
 
-    pub(crate) fn serialize<S>(v: &Instant, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_u64(
-            v.checked_duration_since(Instant::now())
-                .map(|duration| duration.as_secs())
-                .unwrap_or(0),
-        )
-    }
+    deserializer.deserialize_u64(Expires)
 }
 
 pub(crate) mod serde_duration_secs {
+    use std::fmt::{self, Formatter};
+    use std::time::Duration;
+
     use serde::{
         de::{self, Visitor},
         Deserializer, Serializer,
     };
-    use std::fmt::{self, Formatter};
-    use std::time::Duration;
 
     pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
     where
@@ -76,12 +60,13 @@ pub(crate) mod serde_duration_secs {
 }
 
 pub(crate) mod serde_duration_millis {
+    use std::fmt::{self, Formatter};
+    use std::time::Duration;
+
     use serde::{
         de::{self, Visitor},
         Deserializer, Serializer,
     };
-    use std::fmt::{self, Formatter};
-    use std::time::Duration;
 
     pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
     where
@@ -108,8 +93,9 @@ pub(crate) mod serde_duration_millis {
 }
 
 pub(crate) mod serde_duration_millis_option {
-    use serde::{Deserialize, Deserializer, Serializer};
     use std::time::Duration;
+
+    use serde::{Deserialize, Deserializer, Serializer};
 
     pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<Option<Duration>, D::Error>
     where
@@ -134,13 +120,14 @@ pub(crate) mod serde_duration_millis_option {
 }
 
 pub(crate) mod serde_status_code {
+    use std::convert::TryInto;
+    use std::fmt::{self, Formatter};
+
     use reqwest::StatusCode;
     use serde::{
         de::{self, Visitor},
         Deserializer, Serializer,
     };
-    use std::convert::TryInto;
-    use std::fmt::{self, Formatter};
 
     pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<StatusCode, D::Error>
     where
@@ -171,13 +158,15 @@ pub(crate) mod serde_status_code {
 }
 
 pub(crate) mod serde_disallows {
-    use crate::*;
+    use std::fmt::{self, Formatter};
+
     use serde::{
         de::{MapAccess, Visitor},
         ser::SerializeMap,
         Deserializer, Serializer,
     };
-    use std::fmt::{self, Formatter};
+
+    use crate::Disallow;
 
     pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<Vec<Disallow>, D::Error>
     where
@@ -291,4 +280,16 @@ where
     }
 
     deserializer.deserialize_str(DateVisitor)
+}
+
+pub(crate) fn de_date_any_precision_option<'de, D>(
+    deserializer: D,
+) -> Result<Option<NaiveDate>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    struct Wrapper(#[serde(deserialize_with = "de_date_any_precision")] NaiveDate);
+
+    Ok(Option::deserialize(deserializer)?.map(|Wrapper(val)| val))
 }

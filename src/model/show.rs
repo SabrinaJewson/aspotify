@@ -1,5 +1,13 @@
-use crate::model::*;
-use serde::Serialize;
+use std::collections::HashMap;
+use std::time::Duration;
+
+use serde::{Deserialize, Serialize};
+// See line 38+120
+//use isolanguage_1::LanguageCode;
+use chrono::{DateTime, NaiveDate, Utc};
+
+use crate::model::{Copyright, DatePrecision, Image, Page, TypeEpisode, TypeShow};
+use crate::util;
 
 macro_rules! inherit_show_simplified {
     ($(#[$attr:meta])* $name:ident { $($(#[$f_attr:meta])* $f_name:ident : $f_ty:ty,)* }) => {
@@ -8,8 +16,9 @@ macro_rules! inherit_show_simplified {
                 $(#[$f_attr])*
                 $f_name: $f_ty,
             )*
-            /// A list of countries in which the show can be played.
-            available_markets: Vec<CountryCode>,
+            /// A list of countries in which the show can be played. These are ISO 3166 2-letter
+            /// country codes.
+            available_markets: Vec<String>,
             /// The copyright statements of the show.
             copyrights: Vec<Copyright>,
             /// A description of the show.
@@ -25,14 +34,18 @@ macro_rules! inherit_show_simplified {
             images: Vec<Image>,
             /// Whether the episode is hosted outside of Spotify's CDN. Can be None.
             is_externally_hosted: Option<bool>,
-            /// The list of languages used in the show.
-            languages: Vec<LanguageCode>,
+            /// The list of languages used in the show. These are ISO 639 codes.
+            // TODO: it can be en-US/en-GB
+            languages: Vec<String>,
             /// The media type of the show.
             media_type: String,
             /// The name of the show.
             name: String,
             /// The publisher of the show.
             publisher: String,
+            /// The item type; `show`.
+            #[serde(rename = "type")]
+            item_type: TypeShow,
         });
     }
 }
@@ -65,6 +78,7 @@ impl From<Show> for ShowSimplified {
             media_type: show.media_type,
             name: show.name,
             publisher: show.publisher,
+            item_type: TypeShow,
         }
     }
 }
@@ -106,16 +120,20 @@ macro_rules! inherit_episode_simplified {
             /// Whether the episode is playable in the given market.
             is_playable: bool,
             /// The list of languages used in this episode.
-            languages: Vec<LanguageCode>,
+            // TODO: it can be en-US/en-GB
+            languages: Vec<String>,
             /// The name of the episode.
             name: String,
             /// When the episode was released.
-            #[serde(deserialize_with = "de_date_any_precision")]
+            #[serde(deserialize_with = "util::de_date_any_precision")]
             release_date: NaiveDate,
             /// How precise the release date is: precise to the year, month or day.
             release_date_precision: DatePrecision,
             /// The user's most recent position in the episode. None if there is no user.
             resume_point: Option<ResumePoint>,
+            /// The item type; `episode`.
+            #[serde(rename = "type")]
+            item_type: TypeEpisode,
         });
     }
 }
@@ -150,6 +168,7 @@ impl From<Episode> for EpisodeSimplified {
             release_date: episode.release_date,
             release_date_precision: episode.release_date_precision,
             resume_point: episode.resume_point,
+            item_type: TypeEpisode,
         }
     }
 }

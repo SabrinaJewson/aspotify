@@ -1,6 +1,10 @@
-use crate::model::*;
-use serde::{de::Unexpected, Serializer};
-use std::u64;
+use std::fmt::{self, Formatter};
+use std::time::Duration;
+
+use serde::de::{self, Deserializer, Unexpected, Visitor};
+use serde::{Deserialize, Serialize, Serializer};
+
+use crate::model::TypeAudioFeatures;
 
 /// Information and features of a track.
 ///
@@ -28,6 +32,9 @@ pub struct AudioFeatures {
     pub tempo: f64,
     pub time_signature: u32,
     pub valence: f64,
+    /// The item type; `audio_features`.
+    #[serde(rename = "type")]
+    pub item_type: TypeAudioFeatures,
 }
 
 /// The mode of a track (major or minor).
@@ -185,10 +192,10 @@ pub struct AudioAnalysis {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TimeInterval {
     /// The starting point of the time interval.
-    #[serde(with = "serde_duration_secs")]
+    #[serde(with = "crate::util::serde_duration_secs")]
     pub start: Duration,
     /// The duration of the time interval.
-    #[serde(with = "serde_duration_secs")]
+    #[serde(with = "crate::util::serde_duration_secs")]
     pub duration: Duration,
     /// The confidence, from 0 to 1, of the reliability of the interval.
     pub confidence: f64,
