@@ -1,123 +1,126 @@
-//! Endpoint functions related to tracks and audio analysis.
+use std::fmt::Display;
 
-use crate::*;
+use itertools::Itertools;
 use serde::Deserialize;
 
-/// Get audio analysis for a track.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/).
-pub async fn get_audio_analysis_track(
-    token: &AccessToken,
-    id: &str,
-) -> Result<AudioAnalysis, EndpointError<Error>> {
-    Ok(request!(
-        token,
-        GET "/v1/audio-analysis/{}",
-        path_params = [id],
-        ret = AudioAnalysis
-    ))
-}
+use crate::{AudioAnalysis, AudioFeatures, Client, Error, Market, Response, Track};
 
-/// Get audio features for a track.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-features/).
-pub async fn get_audio_features_track(
-    token: &AccessToken,
-    id: &str,
-) -> Result<AudioFeatures, EndpointError<Error>> {
-    Ok(request!(
-        token,
-        GET "/v1/audio-features/{}",
-        path_params = [id],
-        ret = AudioFeatures
-    ))
-}
+/// Endpoint functions related to tracks and audio analysis.
+#[derive(Debug, Clone, Copy)]
+pub struct Tracks<'a>(pub &'a Client);
 
-/// Get audio features for several tracks.
-///
-/// Maximum 100 ids.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/).
-pub async fn get_audio_features_tracks(
-    token: &AccessToken,
-    ids: &[&str],
-) -> Result<Vec<AudioFeatures>, EndpointError<Error>> {
-    if ids.is_empty() {
-        return Ok(Vec::new());
+impl Tracks<'_> {
+    /// Get audio analysis for a track.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/).
+    pub async fn get_analysis(self, id: &str) -> Result<Response<AudioAnalysis>, Error> {
+        self.0
+            .send_json(self.0.client.get(endpoint!("/v1/audio-analysis/{}", id)))
+            .await
     }
 
-    #[derive(Deserialize)]
-    struct ManyAudioFeatures {
-        audio_features: Vec<AudioFeatures>,
+    /// Get audio features for a track.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-features/).
+    pub async fn get_features_track(self, id: &str) -> Result<Response<AudioFeatures>, Error> {
+        self.0
+            .send_json(self.0.client.get(endpoint!("/v1/audio-features/{}", id)))
+            .await
     }
 
-    Ok(request!(
-        token,
-        GET "/v1/audio-features",
-        query_params = {"ids": ids.join(",")},
-        ret = ManyAudioFeatures
-    )
-    .audio_features)
-}
+    /// Get audio features for several tracks.
+    ///
+    /// Maximum 100 ids.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/).
+    pub async fn get_features_tracks<I: Iterator>(
+        self,
+        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+    ) -> Result<Response<Vec<AudioFeatures>>, Error>
+    where
+        I::Item: Display,
+    {
+        #[derive(Deserialize)]
+        struct ManyAudioFeatures {
+            audio_features: Vec<AudioFeatures>,
+        }
 
-/// Get information about several tracks.
-///
-/// Maximum 50 ids.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-tracks/).
-pub async fn get_tracks(
-    token: &AccessToken,
-    ids: &[&str],
-    market: Option<Market>,
-) -> Result<Vec<Track>, EndpointError<Error>> {
-    if ids.is_empty() {
-        return Ok(Vec::new());
+        Ok(self
+            .0
+            .send_json::<ManyAudioFeatures>(
+                self.0
+                    .client
+                    .get(endpoint!("/v1/audio-features"))
+                    .query(&(("ids", ids.into_iter().join(",")),)),
+            )
+            .await?
+            .map(|res| res.audio_features))
     }
 
-    #[derive(Deserialize)]
-    struct Tracks {
-        tracks: Vec<Track>,
-    };
+    /// Get information about several tracks.
+    ///
+    /// Maximum 50 ids.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-tracks/).
+    pub async fn get_tracks<I: Iterator>(
+        self,
+        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        market: Option<Market>,
+    ) -> Result<Response<Vec<Track>>, Error>
+    where
+        I::Item: Display,
+    {
+        #[derive(Deserialize)]
+        struct Tracks {
+            tracks: Vec<Track>,
+        };
 
-    Ok(request!(
-        token,
-        GET "/v1/tracks",
-        query_params = {"ids": ids.join(",")},
-        optional_query_params = {"market": market.map(|m| m.as_str())},
-        ret = Tracks
-    )
-    .tracks)
-}
+        Ok(self
+            .0
+            .send_json::<Tracks>(self.0.client.get(endpoint!("/v1/tracks")).query(&(
+                ("ids", ids.into_iter().join(",")),
+                market.map(Market::query),
+            )))
+            .await?
+            .map(|res| res.tracks))
+    }
 
-/// Get information about a track.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-tracks/).
-pub async fn get_track(
-    token: &AccessToken,
-    id: &str,
-    market: Option<Market>,
-) -> Result<Track, EndpointError<Error>> {
-    Ok(request!(
-        token,
-        GET "/v1/tracks/{}",
-        path_params = [id],
-        optional_query_params = {"market": market.map(|m| m.as_str())},
-        ret = Track
-    ))
+    /// Get information about a track.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-tracks/).
+    pub async fn get_track(
+        self,
+        id: &str,
+        market: Option<Market>,
+    ) -> Result<Response<Track>, Error> {
+        self.0
+            .send_json(
+                self.0
+                    .client
+                    .get(endpoint!("/v1/tracks/{}", id))
+                    .query(&(market.map(Market::query),)),
+            )
+            .await
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::token;
-    use crate::*;
+    use isocountry::CountryCode;
+
+    use crate::endpoints::client;
+    use crate::{Market, Mode};
 
     #[tokio::test]
     async fn test_get_track() {
         // "Walk Like an Egyptian"
-        let track = get_track(&token().await, "1Jwc3ODLQxtbnS8M9TflSP", None)
+        let track = client()
+            .tracks()
+            .get_track("1Jwc3ODLQxtbnS8M9TflSP", None)
             .await
-            .unwrap();
-        assert_eq!(track.id, "1Jwc3ODLQxtbnS8M9TflSP");
+            .unwrap()
+            .data;
+        assert_eq!(track.id.unwrap(), "1Jwc3ODLQxtbnS8M9TflSP");
         assert_eq!(track.name, "Walk Like an Egyptian");
         assert_eq!(track.artists[0].name, "The Bangles");
     }
@@ -125,13 +128,12 @@ mod tests {
     #[tokio::test]
     async fn test_get_tracks() {
         // "Walk Like an Egyptian", "Play that Funky Music"
-        let tracks = get_tracks(
-            &token().await,
-            &["1Jwc3ODLQxtbnS8M9TflSP", "5uuJruktM9fMdN9Va0DUMl"],
-            None,
-        )
-        .await
-        .unwrap();
+        let tracks = client()
+            .tracks()
+            .get_tracks(&["1Jwc3ODLQxtbnS8M9TflSP", "5uuJruktM9fMdN9Va0DUMl"], None)
+            .await
+            .unwrap()
+            .data;
         assert_eq!(tracks.len(), 2);
         assert_eq!(tracks[0].name, "Walk Like an Egyptian");
         assert_eq!(tracks[1].name, "Play That Funky Music");
@@ -140,13 +142,15 @@ mod tests {
     #[tokio::test]
     async fn test_relink() {
         // Test track relinking with "Heaven and Hell"
-        let relinked = get_track(
-            &token().await,
-            "6kLCHFM39wkFjOuyPGLGeQ",
-            Some(Market::Country(CountryCode::USA)),
-        )
-        .await
-        .unwrap();
+        let relinked = client()
+            .tracks()
+            .get_track(
+                "6kLCHFM39wkFjOuyPGLGeQ",
+                Some(Market::Country(CountryCode::USA)),
+            )
+            .await
+            .unwrap()
+            .data;
         assert_eq!(relinked.name, "Heaven and Hell");
         assert!(relinked.is_playable.unwrap());
         let from = relinked.linked_from.as_ref().unwrap();
@@ -156,7 +160,9 @@ mod tests {
     #[tokio::test]
     async fn test_analysis() {
         // Get analysis of "Walk Like an Egyptian"
-        get_audio_analysis_track(&token().await, "1Jwc3ODLQxtbnS8M9TflSP")
+        client()
+            .tracks()
+            .get_analysis("1Jwc3ODLQxtbnS8M9TflSP")
             .await
             .unwrap();
     }
@@ -164,9 +170,12 @@ mod tests {
     #[tokio::test]
     async fn test_features() {
         // Get features of "Walk Like an Egyptian"
-        let features = get_audio_features_track(&token().await, "1Jwc3ODLQxtbnS8M9TflSP")
+        let features = client()
+            .tracks()
+            .get_features_track("1Jwc3ODLQxtbnS8M9TflSP")
             .await
-            .unwrap();
+            .unwrap()
+            .data;
         assert_eq!(features.id, "1Jwc3ODLQxtbnS8M9TflSP");
         assert_eq!(features.key, 11);
         assert_eq!(features.mode, Mode::Major);
@@ -176,12 +185,12 @@ mod tests {
     #[tokio::test]
     async fn test_features_tracks() {
         // Get features of "Walk Like an Egyptian" and "Play that Funky Music"
-        let features = get_audio_features_tracks(
-            &token().await,
-            &["1Jwc3ODLQxtbnS8M9TflSP", "5uuJruktM9fMdN9Va0DUMl"],
-        )
-        .await
-        .unwrap();
+        let features = client()
+            .tracks()
+            .get_features_tracks(&["1Jwc3ODLQxtbnS8M9TflSP", "5uuJruktM9fMdN9Va0DUMl"])
+            .await
+            .unwrap()
+            .data;
         assert_eq!(features.len(), 2);
         assert_eq!(features[0].id, "1Jwc3ODLQxtbnS8M9TflSP");
         assert_eq!(features[1].id, "5uuJruktM9fMdN9Va0DUMl");

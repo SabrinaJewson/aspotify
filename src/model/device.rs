@@ -1,7 +1,13 @@
-use crate::model::*;
-use serde::{ser::SerializeStruct, Serializer};
+use std::collections::HashMap;
+use std::time::Duration;
+
+use serde::ser::{SerializeStruct, Serializer};
+use serde::{Deserialize, Serialize};
 // See line 50
 //use chrono::serde::ts_milliseconds;
+
+use crate::model::{Episode, ItemType, Track};
+use crate::util;
 
 /// A device object.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -55,7 +61,7 @@ pub struct CurrentlyPlaying {
     // pub timestamp: DateTime<Utc>,
     /// Progress into the currently playing track. Is None for example if a private session is
     /// enabled.
-    #[serde(rename = "progress_ms", with = "serde_duration_millis_option")]
+    #[serde(rename = "progress_ms", with = "util::serde_duration_millis_option")]
     pub progress: Option<Duration>,
     /// If something is currently playing.
     pub is_playing: bool,
@@ -84,7 +90,7 @@ pub struct CurrentPlayback {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Actions {
     /// The list of disallowed actions.
-    #[serde(with = "serde_disallows")]
+    #[serde(with = "util::serde_disallows")]
     pub disallows: Vec<Disallow>,
 }
 
@@ -134,7 +140,7 @@ pub struct Context {
     /// The [Spotify
     /// ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
     /// for the context.
-    #[serde(rename = "uri", deserialize_with = "de_any_uri")]
+    #[serde(rename = "uri", deserialize_with = "util::de_any_uri")]
     pub id: String,
 }
 
@@ -180,6 +186,7 @@ pub enum RepeatState {
 
 impl RepeatState {
     /// Get the state of repeating as a string.
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Off => "off",

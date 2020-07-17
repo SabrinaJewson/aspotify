@@ -1,4 +1,10 @@
-use crate::model::*;
+use std::collections::HashMap;
+use std::time::Duration;
+
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
+use crate::model::{AlbumSimplified, ArtistSimplified, Context, Restrictions, TypeTrack};
 
 macro_rules! inherit_track_simplified {
     ($(#[$attr:meta])* $name:ident { $($(#[$f_attr:meta])* $f_name:ident : $f_ty:ty,)* }) => {
@@ -10,8 +16,8 @@ macro_rules! inherit_track_simplified {
             /// The artists who performed the track.
             artists: Vec<ArtistSimplified>,
             /// The markets in which this track is available. Only Some if the market parameter is
-            /// not supplied in the request.
-            available_markets: Option<Vec<CountryCode>>,
+            /// not supplied in the request. This is an ISO-3166 2-letter country code.
+            available_markets: Option<Vec<String>>,
             /// The disc number (1 unless the album contains more than one disc).
             disc_number: usize,
             /// The track length.
@@ -22,8 +28,9 @@ macro_rules! inherit_track_simplified {
             /// Known external URLs for this track.
             external_urls: HashMap<String, String>,
             /// The [Spotify ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
-            /// for this track.
-            id: String,
+            /// for this track. Only not present for a local track, which can only ever be obtained
+            /// from a playlist.
+            id: Option<String>,
             /// When [track
             /// relinking](https://developer.spotify.com/documentation/general/guides/track-relinking-guide/)
             /// is applied, if the track is playable in the given market.
@@ -44,7 +51,10 @@ macro_rules! inherit_track_simplified {
             /// The 1-indexed number of the track in its album; if the track has several discs,
             /// then it the number on the specified disc.
             track_number: usize,
-            /// Whether the track is from a local file.
+            /// The item type; `track`.
+            #[serde(rename = "type")]
+            item_type: TypeTrack,
+            /// Whether the track is a local track.
             is_local: bool,
         });
     }
@@ -84,6 +94,7 @@ impl From<Track> for TrackSimplified {
             name: track.name,
             preview_url: track.preview_url,
             track_number: track.track_number,
+            item_type: TypeTrack,
             is_local: track.is_local,
         }
     }
@@ -97,6 +108,9 @@ pub struct TrackLink {
     /// The [Spotify ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
     /// for this track.
     pub id: String,
+    /// The item type; `track`.
+    #[serde(rename = "type")]
+    pub item_type: TypeTrack,
 }
 
 /// When and how a track was played.

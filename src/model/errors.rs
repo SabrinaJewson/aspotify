@@ -1,119 +1,54 @@
-use crate::model::*;
-use reqwest::StatusCode;
-use serde::Deserialize;
 use std::fmt::{self, Display, Formatter};
 use std::{error, io};
 
-/// A marker trait for an error caused by a Spotify endpoint.
-///
-/// The [`AnyError`](enum.AnyError.html) type is an enum of all these.
-pub trait SpotifyError: error::Error {}
+use reqwest::StatusCode;
+use serde::{Deserialize, Serialize};
+
+use crate::util;
 
 /// An error caused by one of the Web API endpoints relating to authentication.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct AuthenticationError {
+pub struct AuthError {
     /// A high level description of the error.
     pub error: String,
     /// A more detailed description of the error.
     pub error_description: String,
 }
 
-impl Display for AuthenticationError {
+impl Display for AuthError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}: {}", self.error, self.error_description)
     }
 }
 
-impl error::Error for AuthenticationError {}
-impl SpotifyError for AuthenticationError {}
+impl error::Error for AuthError {}
 
+/// A regular error object returned by endpoints of the API.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-struct ErrorWrapper<T> {
-    error: T,
-}
-
-/// A regular error object returns by endpoints of the API.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(
-    from = "ErrorWrapper<ErrorInternal>",
-    into = "ErrorWrapper<ErrorInternal>"
-)]
-pub struct Error {
+#[serde(from = "EndpointErrorWrapper", into = "EndpointErrorWrapper")]
+pub struct EndpointError {
     /// The HTTP status code of the error.
     pub status: StatusCode,
     /// A short description of the error's cause.
     pub message: String,
-}
-impl From<PlayerError> for Error {
-    fn from(e: PlayerError) -> Self {
-        Self {
-            status: e.status,
-            message: e.message,
-        }
-    }
+    /// The reason for the error. Only present for player endpoints.
+    pub reason: Option<PlayerErrorReason>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-struct ErrorInternal {
-    #[serde(with = "serde_status_code")]
+struct EndpointErrorWrapper {
+    error: EndpointErrorInternal,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+struct EndpointErrorInternal {
+    #[serde(with = "util::serde_status_code")]
     status: StatusCode,
     message: String,
+    #[serde(default)]
+    reason: Option<PlayerErrorReason>,
 }
-
-impl From<ErrorWrapper<ErrorInternal>> for Error {
-    fn from(error: ErrorWrapper<ErrorInternal>) -> Self {
-        Self {
-            status: error.error.status,
-            message: error.error.message,
-        }
-    }
-}
-
-impl From<Error> for ErrorWrapper<ErrorInternal> {
-    fn from(error: Error) -> Self {
-        Self {
-            error: ErrorInternal {
-                status: error.status,
-                message: error.message,
-            },
-        }
-    }
-}
-
-impl Display for Error {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "Error {}: {}", self.status, self.message)
-    }
-}
-
-impl error::Error for Error {}
-impl SpotifyError for Error {}
-
-/// An error returned by the player. It is an extension of Error, with an additional reason.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(
-    from = "ErrorWrapper<PlayerErrorInternal>",
-    into = "ErrorWrapper<PlayerErrorInternal>"
-)]
-pub struct PlayerError {
-    /// The HTTP status code of the error.
-    pub status: StatusCode,
-    /// A short description of the error's cause.
-    pub message: String,
-    /// A reason for the error.
-    pub reason: PlayerErrorReason,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-struct PlayerErrorInternal {
-    #[serde(with = "serde_status_code")]
-    status: StatusCode,
-    message: String,
-    reason: PlayerErrorReason,
-}
-
-impl From<ErrorWrapper<PlayerErrorInternal>> for PlayerError {
-    fn from(error: ErrorWrapper<PlayerErrorInternal>) -> Self {
+impl From<EndpointErrorWrapper> for EndpointError {
+    fn from(error: EndpointErrorWrapper) -> Self {
         Self {
             status: error.error.status,
             message: error.error.message,
@@ -121,11 +56,10 @@ impl From<ErrorWrapper<PlayerErrorInternal>> for PlayerError {
         }
     }
 }
-
-impl From<PlayerError> for ErrorWrapper<PlayerErrorInternal> {
-    fn from(error: PlayerError) -> Self {
+impl From<EndpointError> for EndpointErrorWrapper {
+    fn from(error: EndpointError) -> Self {
         Self {
-            error: PlayerErrorInternal {
+            error: EndpointErrorInternal {
                 status: error.status,
                 message: error.message,
                 reason: error.reason,
@@ -134,135 +68,85 @@ impl From<PlayerError> for ErrorWrapper<PlayerErrorInternal> {
     }
 }
 
-impl Display for PlayerError {
+impl Display for EndpointError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}: {}", self.message, self.reason)
-    }
-}
-
-impl error::Error for PlayerError {}
-impl SpotifyError for PlayerError {}
-
-/// An error returned by authentication endpoints, regular endpoints or player endpoints.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum AnyError {
-    /// The error was with authentication.
-    Authentication(AuthenticationError),
-    /// The error was a regular error.
-    Regular(Error),
-    /// The error was a player error.
-    Player(PlayerError),
-}
-
-impl From<AuthenticationError> for AnyError {
-    fn from(e: AuthenticationError) -> Self {
-        Self::Authentication(e)
-    }
-}
-impl From<Error> for AnyError {
-    fn from(e: Error) -> Self {
-        Self::Regular(e)
-    }
-}
-impl From<PlayerError> for AnyError {
-    fn from(e: PlayerError) -> Self {
-        Self::Player(e)
-    }
-}
-
-impl Display for AnyError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self {
-            Self::Authentication(e) => write!(f, "authentication error: {}", e),
-            Self::Regular(e) => e.fmt(f),
-            Self::Player(e) => write!(f, "player error: {}", e),
+        if let Some(reason) = self.reason {
+            write!(f, "{}: {}", self.message, reason)
+        } else {
+            write!(f, "Error {}: {}", self.status, self.message)
         }
     }
 }
 
-impl error::Error for AnyError {
+impl error::Error for EndpointError {}
+
+/// An error from a Spotify endpoint.
+#[derive(Debug)]
+pub enum Error {
+    /// An error caused when sending the HTTP request.
+    Http(reqwest::Error),
+    /// An error caused parsing the response.
+    Parse(serde_json::error::Error),
+    /// An error caused in authentication.
+    Auth(AuthError),
+    /// An error caused by a Spotify endpoint.
+    Endpoint(EndpointError),
+    /// Any other IO error.
+    Io(io::Error),
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::Http(e) => write!(f, "{}", e),
+            Self::Parse(e) => write!(f, "{}", e),
+            Self::Auth(e) => write!(f, "{}", e),
+            Self::Endpoint(e) => write!(f, "{}", e),
+            Self::Io(e) => write!(f, "{}", e),
+        }
+    }
+}
+
+impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         Some(match self {
-            Self::Authentication(e) => e,
-            Self::Regular(e) => e,
-            Self::Player(e) => e,
+            Self::Http(e) => e,
+            Self::Parse(e) => e,
+            Self::Auth(e) => e,
+            Self::Endpoint(e) => e,
+            Self::Io(e) => e,
         })
     }
 }
 
-/// An HTTP error or an error from the endpoint.
-///
-/// See [`SpotifyError`](trait.SpotifyError.html) for the errors that this could contain.
-#[derive(Debug)]
-pub enum EndpointError<E> {
-    /// An error caused when sending the HTTP request.
-    HttpError(reqwest::Error),
-    /// An error caused parsing the response
-    ParseError(serde_json::error::Error),
-    /// An error caused by the Spotify server.
-    SpotifyError(E),
-    /// Any other IO error.
-    IoError(io::Error),
-}
-
-impl<E: Display> Display for EndpointError<E> {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self {
-            Self::HttpError(e) => write!(f, "{}", e),
-            Self::ParseError(e) => write!(f, "{}", e),
-            Self::SpotifyError(e) => write!(f, "{}", e),
-            Self::IoError(e) => write!(f, "{}", e),
-        }
-    }
-}
-
-impl<E: error::Error + 'static> error::Error for EndpointError<E> {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            Self::HttpError(e) => Some(e),
-            Self::ParseError(e) => Some(e),
-            Self::IoError(e) => Some(e),
-            Self::SpotifyError(e) => Some(e),
-        }
-    }
-}
-
-impl<E: SpotifyError + Into<AnyError>> From<EndpointError<E>> for EndpointError<AnyError> {
-    fn from(error: EndpointError<E>) -> Self {
-        match error {
-            EndpointError::HttpError(e) => Self::HttpError(e),
-            EndpointError::ParseError(e) => Self::ParseError(e),
-            EndpointError::SpotifyError(e) => Self::SpotifyError(e.into()),
-            EndpointError::IoError(e) => Self::IoError(e),
-        }
-    }
-}
-
-impl<E> From<reqwest::Error> for EndpointError<E> {
+impl From<reqwest::Error> for Error {
     fn from(error: reqwest::Error) -> Self {
-        Self::HttpError(error)
+        Self::Http(error)
     }
 }
-
-impl<E> From<serde_json::error::Error> for EndpointError<E> {
+impl From<serde_json::error::Error> for Error {
     fn from(error: serde_json::error::Error) -> Self {
-        Self::ParseError(error)
+        Self::Parse(error)
+    }
+}
+impl From<AuthError> for Error {
+    fn from(error: AuthError) -> Self {
+        Self::Auth(error)
+    }
+}
+impl From<EndpointError> for Error {
+    fn from(error: EndpointError) -> Self {
+        Self::Endpoint(error)
     }
 }
 
-impl<E: SpotifyError> From<E> for EndpointError<E> {
-    fn from(error: E) -> Self {
-        Self::SpotifyError(error)
-    }
-}
-
-impl<E: SpotifyError> From<io::Error> for EndpointError<E> {
+impl From<io::Error> for Error {
     fn from(error: io::Error) -> Self {
-        Self::IoError(error)
+        Self::Io(error)
     }
 }
 
-/// A reason for an PlayerError.
+/// A reason for an error caused by the Spotify player.
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PlayerErrorReason {

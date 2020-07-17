@@ -1,19 +1,20 @@
-use aspotify::{AuthCodeFlow, ClientCredentials, Scope};
 use std::fs;
 use std::io::{self, Write};
+
+use aspotify::{Client, ClientCredentials, Scope};
 
 #[tokio::main]
 async fn main() {
     // Read .env file into environment variables.
     dotenv::dotenv().unwrap();
 
-    // Get client credentials from environment variables.
-    let credentials = ClientCredentials::from_env().unwrap();
+    // Create the Spotify client from the credentials in the env variables.
+    let client = Client::new(ClientCredentials::from_env().unwrap());
 
     // Get the URL to send the user to, requesting all the scopes and redirecting to a non-existant website.
-    let url = aspotify::get_authorization_url(
-        &credentials.id,
-        &[
+    let (url, state) = aspotify::authorization_url(
+        &client.credentials.id,
+        [
             Scope::UgcImageUpload,
             Scope::UserReadPlaybackState,
             Scope::UserModifyPlaybackState,
@@ -32,7 +33,9 @@ async fn main() {
             Scope::UserReadRecentlyPlayed,
             Scope::UserFollowRead,
             Scope::UserFollowModify,
-        ],
+        ]
+        .iter()
+        .copied(),
         false,
         "http://non.existant/",
     )
@@ -47,11 +50,9 @@ async fn main() {
     let mut redirect = String::new();
     io::stdin().read_line(&mut redirect).unwrap();
 
-    // Create the authorization flow from that redirect.
-    let flow = AuthCodeFlow::from_redirect(credentials, &redirect)
-        .await
-        .unwrap();
+    // Create the refresh token from the redirected URL.
+    client.redirected(&redirect, &state).await.unwrap();
 
     // Put the refresh token in a file.
-    fs::write(".refresh_token", flow.get_refresh_token()).unwrap();
+    fs::write(".refresh_token", client.refresh_token().await.unwrap()).unwrap();
 }

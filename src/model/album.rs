@@ -1,4 +1,13 @@
-use crate::model::*;
+use std::collections::HashMap;
+
+use chrono::{DateTime, NaiveDate, Utc};
+use serde::{Deserialize, Serialize};
+
+use crate::model::{
+    ArtistSimplified, Copyright, DatePrecision, Image, Page, Restrictions, TrackSimplified,
+    TypeAlbum,
+};
+use crate::util;
 
 macro_rules! inherit_album_simplified {
     ($(#[$attr:meta])* $name:ident { $($(#[$f_attr:meta])* $f_name:ident : $f_ty:ty,)* }) => {
@@ -7,41 +16,72 @@ macro_rules! inherit_album_simplified {
                 $(#[$f_attr])*
                 $f_name: $f_ty,
             )*
-            /// The type of album: album, single or compilation.
-            album_type: AlbumType,
             /// The list of artists who made this album.
             artists: Vec<ArtistSimplified>,
             /// The markets in which at least 1 of the album's tracks is available. Only Some if
-            /// the market parameter is not supplied in the request.
-            available_markets: Option<Vec<CountryCode>>,
+            /// the market parameter is not supplied in the request. This is an ISO 3166 2-letter
+            /// country code.
+            available_markets: Option<Vec<String>>,
             /// Known external URLs for this album.
             external_urls: HashMap<String, String>,
-            /// The [Spotify ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
-            /// for this album.
-            id: String,
             /// The cover art for the album in various sizes, widest first.
             images: Vec<Image>,
             /// The name of the album; if the album has been taken down, this is an empty string.
             name: String,
-            /// When the album was released.
-            #[serde(deserialize_with = "de_date_any_precision")]
-            release_date: NaiveDate,
-            /// How precise the release date is: precise to the year, month or day.
-            release_date_precision: DatePrecision,
             /// When [track
             /// relinking](https://developer.spotify.com/documentation/general/guides/track-relinking-guide/)
             /// is applied, the original track isn't available in the given market and Spotify didn't have
             /// any tracks to relink it with, then this is Some.
             restrictions: Option<Restrictions>,
+            /// The item type; `album`.
+            #[serde(rename = "type")]
+            item_type: TypeAlbum,
         });
     }
 }
 
 inherit_album_simplified!(
     /// A simplified album object.
-    AlbumSimplified {}
+    AlbumSimplified {
+        /// The type of album: album, single or compilation. This can only be not present for the
+        /// album of a local track, which can only ever be obtained from a playlist.
+        album_type: Option<AlbumType>,
+        /// The [Spotify ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
+        /// for this album. This can only be `None` for the album of a local track, which can only
+        /// ever be obtained from a playlist.
+        id: Option<String>,
+        /// When the album was released. This can only be `None` for the album of a local track,
+        /// which can only ever be obtained from a playlist.
+        #[serde(deserialize_with = "util::de_date_any_precision_option")]
+        release_date: Option<NaiveDate>,
+        /// How precise the release date is: precise to the year, month or day. This can only be
+        /// `None` for the album of a local track,which can only ever be obtained from a playlist.
+        release_date_precision: Option<DatePrecision>,
+    }
 );
-inherit_album_simplified!(
+
+macro_rules! inherit_album_not_local {
+    ($(#[$attr:meta])* $name:ident { $($(#[$f_attr:meta])* $f_name:ident : $f_ty:ty,)* }) => {
+        inherit_album_simplified!($(#[$attr])* $name {
+            $(
+                $(#[$f_attr])*
+                $f_name: $f_ty,
+            )*
+            /// The type of album: album, single or compilation.
+            album_type: AlbumType,
+            /// The [Spotify ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
+            /// for this album.
+            id: String,
+            /// When the album was released.
+            #[serde(deserialize_with = "util::de_date_any_precision")]
+            release_date: NaiveDate,
+            /// How precise the release date is: precise to the year, month or day.
+            release_date_precision: DatePrecision,
+        });
+    }
+}
+
+inherit_album_not_local!(
     /// An album object.
     Album {
         /// The known copyrights of this album.
@@ -60,7 +100,7 @@ inherit_album_simplified!(
         tracks: Page<TrackSimplified>,
     }
 );
-inherit_album_simplified!(
+inherit_album_not_local!(
     /// A simplified album object from the context of an artist.
     ArtistsAlbum {
         /// Similar to AlbumType, but also includes if the artist features on the album, and didn't
@@ -72,32 +112,34 @@ inherit_album_simplified!(
 impl From<Album> for AlbumSimplified {
     fn from(album: Album) -> Self {
         Self {
-            album_type: album.album_type,
+            album_type: Some(album.album_type),
             artists: album.artists,
             available_markets: album.available_markets,
             external_urls: album.external_urls,
-            id: album.id,
+            id: Some(album.id),
             images: album.images,
             name: album.name,
-            release_date: album.release_date,
-            release_date_precision: album.release_date_precision,
+            release_date: Some(album.release_date),
+            release_date_precision: Some(album.release_date_precision),
             restrictions: album.restrictions,
+            item_type: TypeAlbum,
         }
     }
 }
 impl From<ArtistsAlbum> for AlbumSimplified {
     fn from(album: ArtistsAlbum) -> Self {
         Self {
-            album_type: album.album_type,
+            album_type: Some(album.album_type),
             artists: album.artists,
             available_markets: album.available_markets,
             external_urls: album.external_urls,
-            id: album.id,
+            id: Some(album.id),
             images: album.images,
             name: album.name,
-            release_date: album.release_date,
-            release_date_precision: album.release_date_precision,
+            release_date: Some(album.release_date),
+            release_date_precision: Some(album.release_date_precision),
             restrictions: album.restrictions,
+            item_type: TypeAlbum,
         }
     }
 }
@@ -117,7 +159,7 @@ pub enum AlbumType {
     Compilation,
 }
 
-/// Similar to AlbumType, but with an extra variant.
+/// Similar to `AlbumType`, but with an extra variant.
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AlbumGroup {
@@ -134,6 +176,7 @@ pub enum AlbumGroup {
 
 impl AlbumGroup {
     /// Get the album's type as a string.
+    #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
             AlbumGroup::Album => "album",

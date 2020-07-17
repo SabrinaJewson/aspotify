@@ -1,41 +1,44 @@
-//! Endpoint functions related to users' profiles.
+use crate::{Client, Error, Response, UserPrivate, UserPublic};
 
-use crate::*;
+/// Endpoint functions related to users' profiles.
+#[derive(Debug, Clone, Copy)]
+pub struct UsersProfile<'a>(pub &'a Client);
 
-/// Get current user's profile.
-///
-/// Reading the user's email requires `user-read-email`, reading their country and product
-/// subscription level requires `user-read-private`.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/users-profile/get-current-users-profile/).
-pub async fn get_current_user(token: &AccessToken) -> Result<UserPrivate, EndpointError<Error>> {
-    Ok(request!(
-        token,
-        GET "/v1/me",
-        ret = UserPrivate
-    ))
-}
+impl UsersProfile<'_> {
+    /// Get current user's profile.
+    ///
+    /// Reading the user's email requires `user-read-email`, reading their country and product
+    /// subscription level requires `user-read-private`.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/users-profile/get-current-users-profile/).
+    pub async fn get_current_user(self) -> Result<Response<UserPrivate>, Error> {
+        self.0
+            .send_json(self.0.client.get(endpoint!("/v1/me")))
+            .await
+    }
 
-/// Get a user's profile.
-///
-/// [Reference](https://developer.spotify.com/documentation/web-api/reference/users-profile/get-users-profile/).
-pub async fn get_user(token: &AccessToken, id: &str) -> Result<UserPublic, EndpointError<Error>> {
-    Ok(request!(
-        token,
-        GET "/v1/users/{}",
-        path_params = [id],
-        ret = UserPublic
-    ))
+    /// Get a user's profile.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/users-profile/get-users-profile/).
+    pub async fn get_user(self, id: &str) -> Result<Response<UserPublic>, Error> {
+        self.0
+            .send_json(self.0.client.get(endpoint!("/v1/users/{}", id)))
+            .await
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::token;
-    use crate::*;
+    use crate::endpoints::client;
 
     #[tokio::test]
     async fn test_get_user() {
-        let user = get_user(&token().await, "spotify").await.unwrap();
+        let user = client()
+            .users_profile()
+            .get_user("spotify")
+            .await
+            .unwrap()
+            .data;
         assert_eq!(user.display_name.unwrap(), "Spotify");
         assert_eq!(user.external_urls.len(), 1);
         assert_eq!(
@@ -52,7 +55,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_current() {
-        let user = get_current_user(&token().await).await.unwrap();
+        let user = client()
+            .users_profile()
+            .get_current_user()
+            .await
+            .unwrap()
+            .data;
         assert_eq!(user.external_urls.len(), 1);
         assert_eq!(
             user.external_urls["spotify"],
