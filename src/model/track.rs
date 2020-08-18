@@ -78,25 +78,32 @@ inherit_track_simplified!(
     }
 );
 
+impl Track {
+    /// Convert to a `TrackSimplified`.
+    #[must_use]
+    pub fn simplify(self) -> TrackSimplified {
+        TrackSimplified {
+            artists: self.artists,
+            available_markets: self.available_markets,
+            disc_number: self.disc_number,
+            duration: self.duration,
+            explicit: self.explicit,
+            external_urls: self.external_urls,
+            id: self.id,
+            is_playable: self.is_playable,
+            linked_from: self.linked_from,
+            restrictions: self.restrictions,
+            name: self.name,
+            preview_url: self.preview_url,
+            track_number: self.track_number,
+            item_type: TypeTrack,
+            is_local: self.is_local,
+        }
+    }
+}
 impl From<Track> for TrackSimplified {
     fn from(track: Track) -> Self {
-        Self {
-            artists: track.artists,
-            available_markets: track.available_markets,
-            disc_number: track.disc_number,
-            duration: track.duration,
-            explicit: track.explicit,
-            external_urls: track.external_urls,
-            id: track.id,
-            is_playable: track.is_playable,
-            linked_from: track.linked_from,
-            restrictions: track.restrictions,
-            name: track.name,
-            preview_url: track.preview_url,
-            track_number: track.track_number,
-            item_type: TypeTrack,
-            is_local: track.is_local,
-        }
+        track.simplify()
     }
 }
 

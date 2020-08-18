@@ -63,23 +63,30 @@ inherit_show_simplified!(
     }
 );
 
-impl From<Show> for ShowSimplified {
-    fn from(show: Show) -> Self {
-        Self {
-            available_markets: show.available_markets,
-            copyrights: show.copyrights,
-            description: show.description,
-            explicit: show.explicit,
-            external_urls: show.external_urls,
-            id: show.id,
-            images: show.images,
-            is_externally_hosted: show.is_externally_hosted,
-            languages: show.languages,
-            media_type: show.media_type,
-            name: show.name,
-            publisher: show.publisher,
+impl Show {
+    /// Convert to a `ShowSimplified`.
+    #[must_use]
+    pub fn simplify(self) -> ShowSimplified {
+        ShowSimplified {
+            available_markets: self.available_markets,
+            copyrights: self.copyrights,
+            description: self.description,
+            explicit: self.explicit,
+            external_urls: self.external_urls,
+            id: self.id,
+            images: self.images,
+            is_externally_hosted: self.is_externally_hosted,
+            languages: self.languages,
+            media_type: self.media_type,
+            name: self.name,
+            publisher: self.publisher,
             item_type: TypeShow,
         }
+    }
+}
+impl From<Show> for ShowSimplified {
+    fn from(show: Show) -> Self {
+        show.simplify()
     }
 }
 
@@ -151,25 +158,32 @@ inherit_episode_simplified!(
     }
 );
 
-impl From<Episode> for EpisodeSimplified {
-    fn from(episode: Episode) -> Self {
-        Self {
-            audio_preview_url: episode.audio_preview_url,
-            description: episode.description,
-            duration: episode.duration,
-            explicit: episode.explicit,
-            external_urls: episode.external_urls,
-            id: episode.id,
-            images: episode.images,
-            is_externally_hosted: episode.is_externally_hosted,
-            is_playable: episode.is_playable,
-            languages: episode.languages,
-            name: episode.name,
-            release_date: episode.release_date,
-            release_date_precision: episode.release_date_precision,
-            resume_point: episode.resume_point,
+impl Episode {
+    /// Convert to an `EpisodeSimplified`.
+    #[must_use]
+    pub fn simplify(self) -> EpisodeSimplified {
+        EpisodeSimplified {
+            audio_preview_url: self.audio_preview_url,
+            description: self.description,
+            duration: self.duration,
+            explicit: self.explicit,
+            external_urls: self.external_urls,
+            id: self.id,
+            images: self.images,
+            is_externally_hosted: self.is_externally_hosted,
+            is_playable: self.is_playable,
+            languages: self.languages,
+            name: self.name,
+            release_date: self.release_date,
+            release_date_precision: self.release_date_precision,
+            resume_point: self.resume_point,
             item_type: TypeEpisode,
         }
+    }
+}
+impl From<Episode> for EpisodeSimplified {
+    fn from(episode: Episode) -> Self {
+        episode.simplify()
     }
 }
 
