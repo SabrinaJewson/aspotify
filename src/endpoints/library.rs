@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use itertools::Itertools;
 
+use super::{chunked_requests, chunked_sequence};
 use crate::{Client, Error, Market, Page, Response, SavedAlbum, SavedShow, SavedTrack};
 
 /// Endpoints relating to saving albums and tracks.
@@ -22,15 +23,18 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_json(
-                self.0
-                    .client
-                    .get(endpoint!("/v1/me/albums/contains"))
-                    .query(&(("ids", ids.into_iter().join(",")),)),
-            )
-            .await
+        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_json(
+                    self.0
+                        .client
+                        .get(endpoint!("/v1/me/albums/contains"))
+                        .query(&(("ids", ids.join(",")),)),
+                )
+                .await
+        }).await
     }
+
 
     /// Check if the current user has saved some shows.
     ///
@@ -45,14 +49,16 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_json(
-                self.0
-                    .client
-                    .get(endpoint!("/v1/me/shows/contains"))
-                    .query(&(("ids", ids.into_iter().join(",")),)),
-            )
-            .await
+        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_json(
+                    self.0
+                        .client
+                        .get(endpoint!("/v1/me/shows/contains"))
+                        .query(&(("ids", ids.join(",")),)),
+                )
+                .await
+        }).await
     }
 
     /// Check if the current user has saved some tracks.
@@ -68,14 +74,16 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_json(
-                self.0
-                    .client
-                    .get(endpoint!("/v1/me/tracks/contains"))
-                    .query(&(("ids", ids.into_iter().join(",")),)),
-            )
-            .await
+        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_json(
+                    self.0
+                        .client
+                        .get(endpoint!("/v1/me/tracks/contains"))
+                        .query(&(("ids", ids.join(",")),)),
+                )
+                .await
+        }).await
     }
 
     /// Get the current user's saved albums.
@@ -140,7 +148,7 @@ impl Library<'_> {
 
     /// Unsave some of the current user's saved albums.
     ///
-    /// Requires `user-library-modify`. Maximum of 50 ids.
+    /// Requires `user-library-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/remove-albums-user/).
     pub async fn unsave_albums<I: Iterator>(
@@ -150,15 +158,17 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_empty(
-                self.0
-                    .client
-                    .delete(endpoint!("/v1/me/albums"))
-                    .query(&(("ids", ids.into_iter().join(",")),))
-                    .body("{}"),
-            )
-            .await
+        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_empty(
+                    self.0
+                        .client
+                        .delete(endpoint!("/v1/me/albums"))
+                        .query(&(("ids", ids.join(",")),))
+                        .body("{}"),
+                )
+                .await
+        }).await
     }
 
     /// Unsave some of the current user's saved shows.
@@ -173,20 +183,22 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_empty(
-                self.0
-                    .client
-                    .delete(endpoint!("/v1/me/shows"))
-                    .query(&(("ids", ids.into_iter().join(",")),))
-                    .body("{}"),
-            )
-            .await
+        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_empty(
+                    self.0
+                        .client
+                        .delete(endpoint!("/v1/me/shows"))
+                        .query(&(("ids", ids.join(",")),))
+                        .body("{}"),
+                )
+                .await
+        }).await
     }
 
     /// Unsave some of the current user's saved tracks.
     ///
-    /// Requires `user-library-modify`. Maximum of 50 ids.
+    /// Requires `user-library-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/remove-tracks-user/).
     pub async fn unsave_tracks<I: Iterator>(
@@ -196,20 +208,22 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_empty(
-                self.0
-                    .client
-                    .delete(endpoint!("/v1/me/tracks"))
-                    .query(&(("ids", ids.into_iter().join(",")),))
-                    .body("{}"),
-            )
-            .await
+        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_empty(
+                    self.0
+                        .client
+                        .delete(endpoint!("/v1/me/tracks"))
+                        .query(&(("ids", ids.join(",")),))
+                        .body("{}"),
+                )
+                .await
+        }).await
     }
 
     /// Save albums for the current user.
     ///
-    /// Requires `user-library-modify`. Maximum of 50 ids.
+    /// Requires `user-library-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/save-albums-user/).
     pub async fn save_albums<I: Iterator>(
@@ -219,15 +233,17 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_empty(
-                self.0
-                    .client
-                    .put(endpoint!("/v1/me/albums"))
-                    .query(&(("ids", ids.into_iter().join(",")),))
-                    .body("{}"),
-            )
-            .await
+        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_empty(
+                    self.0
+                        .client
+                        .put(endpoint!("/v1/me/albums"))
+                        .query(&(("ids", ids.join(",")),))
+                        .body("{}"),
+                )
+                .await
+        }).await
     }
 
     /// Save shows for the current user.
@@ -242,20 +258,22 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_empty(
-                self.0
-                    .client
-                    .put(endpoint!("/v1/me/shows"))
-                    .query(&(("ids", ids.into_iter().join(",")),))
-                    .body("{}"),
-            )
-            .await
+        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_empty(
+                    self.0
+                        .client
+                        .put(endpoint!("/v1/me/shows"))
+                        .query(&(("ids", ids.join(",")),))
+                        .body("{}"),
+                )
+                .await
+        }).await
     }
 
     /// Save tracks for the current user.
     ///
-    /// Requires `user-library-modify`. Maximum of 50 ids.
+    /// Requires `user-library-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/save-albums-user/).
     pub async fn save_tracks<I: Iterator>(
@@ -265,15 +283,17 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_empty(
-                self.0
-                    .client
-                    .put(endpoint!("/v1/me/tracks"))
-                    .query(&(("ids", ids.into_iter().join(",")),))
-                    .body("{}"),
-            )
-            .await
+        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_empty(
+                    self.0
+                        .client
+                        .put(endpoint!("/v1/me/tracks"))
+                        .query(&(("ids", ids.join(",")),))
+                        .body("{}"),
+                )
+                .await
+        }).await
     }
 }
 

@@ -3,6 +3,7 @@ use std::fmt::Display;
 use itertools::Itertools;
 use serde::Deserialize;
 
+use super::chunked_sequence;
 use crate::{AudioAnalysis, AudioFeatures, Client, Error, Market, Response, Track};
 
 /// Endpoint functions related to tracks and audio analysis.
@@ -30,8 +31,6 @@ impl Tracks<'_> {
 
     /// Get audio features for several tracks.
     ///
-    /// Maximum 100 ids.
-    ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/).
     pub async fn get_features_tracks<I: Iterator>(
         self,
@@ -45,21 +44,21 @@ impl Tracks<'_> {
             audio_features: Vec<AudioFeatures>,
         }
 
-        Ok(self
-            .0
-            .send_json::<ManyAudioFeatures>(
-                self.0
-                    .client
-                    .get(endpoint!("/v1/audio-features"))
-                    .query(&(("ids", ids.into_iter().join(",")),)),
-            )
-            .await?
-            .map(|res| res.audio_features))
+        chunked_sequence(&ids.into_iter().chunks(100), |mut ids| async move {
+            Ok(self
+                .0
+                .send_json::<ManyAudioFeatures>(
+                    self.0
+                        .client
+                        .get(endpoint!("/v1/audio-features"))
+                        .query(&(("ids", ids.join(",")),)),
+                )
+                .await?
+                .map(|res| res.audio_features))
+        }).await
     }
 
     /// Get information about several tracks.
-    ///
-    /// Maximum 50 ids.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-tracks/).
     pub async fn get_tracks<I: Iterator>(
@@ -75,14 +74,16 @@ impl Tracks<'_> {
             tracks: Vec<Track>,
         };
 
-        Ok(self
-            .0
-            .send_json::<Tracks>(self.0.client.get(endpoint!("/v1/tracks")).query(&(
-                ("ids", ids.into_iter().join(",")),
-                market.map(Market::query),
-            )))
-            .await?
-            .map(|res| res.tracks))
+        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
+            Ok(self
+                .0
+                .send_json::<Tracks>(self.0.client.get(endpoint!("/v1/tracks")).query(&(
+                    ("ids", ids.join(",")),
+                    market.map(Market::query),
+                )))
+                .await?
+                .map(|res| res.tracks))
+        }).await
     }
 
     /// Get information about a track.

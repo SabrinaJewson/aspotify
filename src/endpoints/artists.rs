@@ -6,6 +6,7 @@ use isocountry::CountryCode;
 use itertools::Itertools;
 use serde::Deserialize;
 
+use super::chunked_sequence;
 use crate::{AlbumGroup, Artist, ArtistsAlbum, Client, Error, Market, Page, Response, Track};
 
 /// Artist-related endpoints.
@@ -24,8 +25,6 @@ impl Artists<'_> {
 
     /// Get information about several artists.
     ///
-    /// Maximum number of artists is 50.
-    ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/artists/get-several-artists/).
     pub async fn get_artists<I: Iterator>(
         self,
@@ -39,16 +38,18 @@ impl Artists<'_> {
             artists: Vec<Artist>,
         };
 
-        Ok(self
-            .0
-            .send_json::<Artists>(
-                self.0
-                    .client
-                    .get(endpoint!("/v1/artists"))
-                    .query(&(("ids", ids.into_iter().join(",")),)),
-            )
-            .await?
-            .map(|res| res.artists))
+        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
+            Ok(self
+                .0
+                .send_json::<Artists>(
+                    self.0
+                        .client
+                        .get(endpoint!("/v1/artists"))
+                        .query(&(("ids", ids.join(",")),)),
+                )
+                .await?
+                .map(|res| res.artists))
+        }).await
     }
 
     /// Get an artist's albums.
@@ -91,7 +92,8 @@ impl Artists<'_> {
 
     /// Get an artist's top tracks.
     ///
-    /// Unlike most other endpoints, the country code is required. The response contains up to 10 tracks which are the artist's top tracks.
+    /// Unlike most other endpoints, the country code is required. The response contains up to 10
+    /// tracks which are the artist's top tracks.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/artists/get-artists-top-tracks/).
     pub async fn get_artist_top(

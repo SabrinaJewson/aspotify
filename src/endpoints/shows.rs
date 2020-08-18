@@ -4,6 +4,7 @@ use isocountry::CountryCode;
 use itertools::Itertools;
 use serde::Deserialize;
 
+use super::chunked_sequence;
 use crate::{Client, EpisodeSimplified, Error, Page, Response, Show, ShowSimplified};
 
 /// Endpoint functions relating to shows.
@@ -57,14 +58,16 @@ impl Shows<'_> {
             shows: Vec<ShowSimplified>,
         }
 
-        Ok(self
-            .0
-            .send_json::<Shows>(self.0.client.get(endpoint!("/v1/shows")).query(&(
-                ("ids", ids.into_iter().join(",")),
-                market.map(|c| ("market", c.alpha2())),
-            )))
-            .await?
-            .map(|res| res.shows))
+        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
+            Ok(self
+                .0
+                .send_json::<Shows>(self.0.client.get(endpoint!("/v1/shows")).query(&(
+                    ("ids", ids.join(",")),
+                    market.map(|c| ("market", c.alpha2())),
+                )))
+                .await?
+                .map(|res| res.shows))
+        }).await
     }
 
     /// Get a show's episodes.
