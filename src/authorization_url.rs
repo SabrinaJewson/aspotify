@@ -1,9 +1,5 @@
 use itertools::Itertools;
-use rand::Rng;
 use url::Url;
-
-const STATE_LEN: usize = 16;
-const STATE_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~";
 
 /// A scope that the user can grant access to.
 ///
@@ -60,31 +56,22 @@ impl Scope {
     }
 }
 
-/// Get the URL to redirect the user's browser to so that the URL can be generated for the
-/// `Client::redirected` function.
+/// Like [`authorization_url`](fn.authorization_url.html), but you supply your own state.
 ///
-/// `force_approve`, if set, forces the user to approve the app again even if they already have.
-/// Make sure that you have whitelisted the redirect uri in your Spotify dashboard, and
-/// `redirect_uri` must not contain any query strings.
+/// It is recommended to use randomly generated state for security, so use this if you wish to use
+/// your own random state generator.
 ///
-/// This method returns a tuple of the generated url and the state parameter, which is randomly
-/// generated for security.
+/// This function, unlike `authorization_url` does not require features to be activated.
 ///
-/// [Reference](https://developer.spotify.com/documentation/general/guides/authorization-guide/#1-have-your-application-request-authorization-the-user-logs-in-and-authorizes-access).
-pub async fn authorization_url(
+/// See the docs of the other function for information about the parameters.
+pub fn authorization_url_with_state(
     client_id: &str,
     scopes: impl IntoIterator<Item = Scope>,
     force_approve: bool,
     redirect_uri: &str,
-) -> (String, String) {
-    let mut rng = rand::thread_rng();
-    let mut state = String::with_capacity(STATE_LEN);
-    for _ in 0..STATE_LEN {
-        state.push(STATE_CHARS[rng.gen_range(0, STATE_CHARS.len())].into());
-    }
-    let state = state;
-
-    let url = Url::parse_with_params(
+    state: &str
+) -> String {
+    Url::parse_with_params(
         "https://accounts.spotify.com/authorize",
         &[
             ("response_type", "code"),
@@ -96,7 +83,40 @@ pub async fn authorization_url(
         ],
     )
     .unwrap()
-    .into_string();
+    .into_string()
+}
 
-    (url, state)
+/// Get the URL to redirect the user's browser to so that the URL can be generated for the
+/// `Client::redirected` function.
+///
+/// `force_approve`, if set, forces the user to approve the app again even if they already have.
+/// Make sure that you have whitelisted the redirect uri in your Spotify dashboard, and
+/// `redirect_uri` must not contain any query strings.
+///
+/// This method returns a tuple of the generated url and the state parameter, which is randomly
+/// generated for security.
+///
+/// This function is only available when the `rand` feature of this library is activated, and it is
+/// activated by default.
+///
+/// [Reference](https://developer.spotify.com/documentation/general/guides/authorization-guide/#1-have-your-application-request-authorization-the-user-logs-in-and-authorizes-access).
+#[cfg(feature = "rand")]
+pub fn authorization_url(
+    client_id: &str,
+    scopes: impl IntoIterator<Item = Scope>,
+    force_approve: bool,
+    redirect_uri: &str,
+) -> (String, String) {
+    use rand::Rng as _;
+
+    const STATE_LEN: usize = 16;
+    const STATE_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~";
+
+    let mut rng = rand::thread_rng();
+    let mut state = String::with_capacity(STATE_LEN);
+    for _ in 0..STATE_LEN {
+        state.push(STATE_CHARS[rng.gen_range(0, STATE_CHARS.len())].into());
+    }
+
+    (authorization_url_with_state(client_id, scopes, force_approve, redirect_uri, &state), state)
 }

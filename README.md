@@ -16,6 +16,28 @@ Developer](https://developer.spotify.com/dashboard/applications) account, which 
 can use endpoints with your Client ID and Client Secret with Client Credentials, or perform actions
 on behalf of a user with oauth2 and Authorization Code.
 
+## Example
+
+```rust
+use aspotify::{Client, ClientCredentials};
+
+// This from_env function tries to read the CLIENT_ID and CLIENT_SECRET environment variables.
+// You can use the dotenv crate to read it from a file.
+let credentials = ClientCredentials::from_env()
+    .expect("CLIENT_ID and CLIENT_SECRET not found.");
+
+// Create a Spotify client.
+let client = Client::new(credentials);
+
+// Gets the album "Favourite Worst Nightmare" from Spotify, with no specified market.
+let album = client.albums().get_album("1XkGORuUX2QGOEIL4EbJKm", None).await.unwrap();
+```
+
+## Features
+
+At the time of the latest release, `aspotify` supports all the features of the Spotify API. It uses
+`reqwest` internally, and so must run with Tokio's runtime.
+
 ## Testing
 
 In order to test, you first need to add `http://non.existant/` in your Spotify whitelisted URLs. Get
@@ -33,7 +55,9 @@ These tests will make temporary changes to your account, however they will all b
 also need an unrestricted non-private Spotify client open to get all the tests to run successfully,
 and you must not have any songs in your queue.
 
-## TODO
+## Planned
 
-Automatically send multiple requests when the limit is above Spotify's limit for functions that
+- Add a blocking API.
+- Support other HTTP clients.
+- Automatically send multiple requests when the limit is above Spotify's limit for functions that
 return `Page`/`CursorPage`.
