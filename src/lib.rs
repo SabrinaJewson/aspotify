@@ -1,6 +1,5 @@
 //! aspotify is an asynchronous client to the [Spotify
-//! API](https://developer.spotify.com/documentation/web-api/). It is similar to rspotify, but is
-//! asynchronous and has a very different API.
+//! API](https://developer.spotify.com/documentation/web-api/).
 //!
 //! # Examples
 //! ```no_run
@@ -19,6 +18,10 @@
 //! let album = client.albums().get_album("1XkGORuUX2QGOEIL4EbJKm", None).await.unwrap();
 //! # };
 //! ```
+//!
+//! # Notes
+//! - Spotify often imposes limits on endpoints, for example you can't get more than 50 tracks at
+//! once. This crate removes this limit by making multiple requests when necessary.
 #![warn(missing_docs, clippy::pedantic)]
 #![allow(
     clippy::module_name_repetitions,

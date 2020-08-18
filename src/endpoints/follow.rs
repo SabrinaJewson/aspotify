@@ -4,6 +4,7 @@ use itertools::Itertools;
 use reqwest::header;
 use serde::Deserialize;
 
+use super::{chunked_requests, chunked_sequence};
 use crate::{Artist, Client, CursorPage, Error, Response};
 
 /// Endpoint functions relating to following and unfollowing artists, users and playlists.
@@ -13,7 +14,7 @@ pub struct Follow<'a>(pub &'a Client);
 impl Follow<'_> {
     /// Check if the current user follows some artists.
     ///
-    /// Returns vector of bools that is in the same order as the given ids. Maximum 50 ids. Requires
+    /// Returns vector of bools that is in the same order as the given ids. Requires
     /// `user-follow-read`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-current-user-follows/).
@@ -24,19 +25,21 @@ impl Follow<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_json(
-                self.0
-                    .client
-                    .get(endpoint!("/v1/me/following/contains"))
-                    .query(&(("type", "artist"), ("ids", ids.into_iter().join(",")))),
-            )
-            .await
+        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_json(
+                    self.0
+                        .client
+                        .get(endpoint!("/v1/me/following/contains"))
+                        .query(&(("type", "artist"), ("ids", ids.join(",")))),
+                )
+                .await
+        }).await
     }
 
     /// Check if the current user follows some users.
     ///
-    /// Return vector of bools that is in the same order as the given ids. Maximum 50 ids. Requires
+    /// Returns vector of bools that is in the same order as the given ids. Requires
     /// `user-follow-read`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-current-user-follows/).
@@ -47,21 +50,23 @@ impl Follow<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_json(
-                self.0
-                    .client
-                    .get(endpoint!("/v1/me/following/contains"))
-                    .query(&(("type", "user"), ("ids", ids.into_iter().join(",")))),
-            )
-            .await
+        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_json(
+                    self.0
+                        .client
+                        .get(endpoint!("/v1/me/following/contains"))
+                        .query(&(("type", "user"), ("ids", ids.join(",")))),
+                )
+                .await
+        }).await
     }
 
     /// Check if some users follow a playlist.
     ///
-    /// `id` is the id of the playlist and `user_ids` is the users who you want to check, maximum 5.
-    /// Users can publicly or privately follow playlists; checking whether a user privately follows a
-    /// playlist requires `playlist-read-private`.
+    /// `id` is the id of the playlist and `user_ids` is the users who you want to check. Users can
+    /// publicly or privately follow playlists; checking whether a user privately follows a playlist
+    /// requires `playlist-read-private`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-user-following-playlist/).
     pub async fn users_follow_playlist<I: Iterator>(
@@ -72,19 +77,21 @@ impl Follow<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_json(
-                self.0
-                    .client
-                    .get(endpoint!("/v1/playlists/{}/followers/contains", id))
-                    .query(&(("ids", user_ids.into_iter().join(",")),)),
-            )
-            .await
+        chunked_sequence(&user_ids.into_iter().chunks(5), |mut user_ids| async move {
+            self.0
+                .send_json(
+                    self.0
+                        .client
+                        .get(endpoint!("/v1/playlists/{}/followers/contains", id))
+                        .query(&(("ids", user_ids.join(",")),)),
+                )
+                .await
+        }).await
     }
 
     /// Follow artists.
     ///
-    /// Maximum 50 ids. Requires `user-follow-modify`.
+    /// Requires `user-follow-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/).
     pub async fn follow_artists<I: Iterator>(
@@ -94,20 +101,22 @@ impl Follow<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_empty(
-                self.0
-                    .client
-                    .put(endpoint!("/v1/me/following"))
-                    .query(&(("type", "artist"), ("ids", ids.into_iter().join(","))))
-                    .body("{}"),
-            )
-            .await
+        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_empty(
+                    self.0
+                        .client
+                        .put(endpoint!("/v1/me/following"))
+                        .query(&(("type", "artist"), ("ids", ids.join(","))))
+                        .body("{}"),
+                )
+                .await
+        }).await
     }
 
     /// Follow users.
     ///
-    /// Maximum 50 ids. Requires `user-follow-modify`.
+    /// Requires `user-follow-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/).
     pub async fn follow_users<I: Iterator>(
@@ -117,15 +126,17 @@ impl Follow<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_empty(
-                self.0
-                    .client
-                    .put(endpoint!("/v1/me/following"))
-                    .query(&(("type", "user"), ("ids", ids.into_iter().join(","))))
-                    .body("{}"),
-            )
-            .await
+        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_empty(
+                    self.0
+                        .client
+                        .put(endpoint!("/v1/me/following"))
+                        .query(&(("type", "user"), ("ids", ids.join(","))))
+                        .body("{}"),
+                )
+                .await
+        }).await
     }
 
     /// Follow a playlist publicly.
@@ -191,7 +202,7 @@ impl Follow<'_> {
 
     /// Unfollow artists.
     ///
-    /// Maximum 50 ids. Requires `user-follow-modify`.
+    /// Requires `user-follow-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/).
     pub async fn unfollow_artists<I: Iterator>(
@@ -201,20 +212,22 @@ impl Follow<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_empty(
-                self.0
-                    .client
-                    .delete(endpoint!("/v1/me/following"))
-                    .query(&(("type", "artist"), ("ids", ids.into_iter().join(","))))
-                    .body("{}"),
-            )
-            .await
+        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_empty(
+                    self.0
+                        .client
+                        .delete(endpoint!("/v1/me/following"))
+                        .query(&(("type", "artist"), ("ids", ids.join(","))))
+                        .body("{}"),
+                )
+                .await
+        }).await
     }
 
     /// Unfollow users.
     ///
-    /// Maximum 50 ids. Requires `user-follow-modify`.
+    /// Requires `user-follow-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/).
     pub async fn unfollow_users<I: Iterator>(
@@ -224,15 +237,17 @@ impl Follow<'_> {
     where
         I::Item: Display,
     {
-        self.0
-            .send_empty(
-                self.0
-                    .client
-                    .delete(endpoint!("/v1/me/following"))
-                    .query(&(("type", "users"), ("ids", ids.into_iter().join(","))))
-                    .body("{}"),
-            )
-            .await
+        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
+            self.0
+                .send_empty(
+                    self.0
+                        .client
+                        .delete(endpoint!("/v1/me/following"))
+                        .query(&(("type", "users"), ("ids", ids.join(","))))
+                        .body("{}"),
+                )
+                .await
+        }).await
     }
 
     /// Unfollow a playlist.

@@ -5,6 +5,7 @@ use std::fmt::Display;
 use itertools::Itertools as _;
 use serde::Deserialize;
 
+use super::chunked_sequence;
 use crate::{Album, Client, Error, Market, Page, Response, TrackSimplified};
 
 /// Album-related endpoints.
@@ -32,8 +33,6 @@ impl Albums<'_> {
 
     /// Get information about several albums.
     ///
-    /// Maximum number of albums is 20.
-    ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/albums/get-several-albums/).
     pub async fn get_albums<I: Iterator>(
         self,
@@ -48,20 +47,22 @@ impl Albums<'_> {
             albums: Vec<Album>,
         }
 
-        Ok(self
-            .0
-            .send_json::<Albums>(self.0.client.get(endpoint!("/v1/albums")).query(&(
-                ("ids", ids.into_iter().join(",")),
-                market.map(Market::query),
-            )))
-            .await?
-            .map(|res| res.albums))
+        chunked_sequence(&ids.into_iter().chunks(20), |mut ids| async move {
+            Ok(self
+                .0
+                .send_json::<Albums>(self.0.client.get(endpoint!("/v1/albums")).query(&(
+                    ("ids", ids.join(",")),
+                    market.map(Market::query),
+                )))
+                .await?
+                .map(|res| res.albums))
+        }).await
     }
 
     /// Get an album's tracks.
     ///
-    /// It does not return all the tracks, but a page of tracks. Limit and offset determine attributes
-    /// of the page. Limit has a maximum of 50.
+    /// It does not return all the tracks, but a page of tracks. Limit and offset determine
+    /// attributes of the page. Limit has a maximum of 50.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/albums/get-albums-tracks/).
     pub async fn get_album_tracks(

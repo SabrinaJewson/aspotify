@@ -1,6 +1,6 @@
 use std::fmt::Display;
-use std::fs;
-use std::path::Path;
+#[cfg(feature = "base64")]
+use std::{fs, path::Path};
 
 use reqwest::header;
 
@@ -366,7 +366,10 @@ impl Playlists<'_> {
     /// `image` must be JPEG data. If you want to pass in a filename, see
     /// `upload_playlist_cover_file`.
     ///
+    /// This function is only available when the `base64` feature of this library is enabled.
+    ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/playlists/upload-custom-playlist-cover/).
+    #[cfg(feature = "base64")]
     pub async fn upload_playlist_cover_jpeg<T: ?Sized + AsRef<[u8]>>(
         self,
         id: &str,
@@ -382,7 +385,10 @@ impl Playlists<'_> {
     ///
     /// `image` must be a JPEG filename.
     ///
+    /// This function is only available when the `base64` feature of this library is enabled.
+    ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/playlists/upload-custom-playlist-cover/).
+    #[cfg(feature = "base64")]
     pub async fn upload_playlist_cover_file<P: AsRef<Path>>(
         self,
         id: &str,
@@ -394,8 +400,10 @@ impl Playlists<'_> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "base64")]
     use std::time::Duration;
 
+    #[cfg(feature = "base64")]
     use tokio::time;
 
     use crate::endpoints::client;
@@ -582,22 +590,25 @@ mod tests {
         assert_eq!(playlist.tracks.items, &[]);
 
         // Upload image
-        playlists
-            .upload_playlist_cover_file(&playlist.id, "example_image.jpeg")
-            .await
-            .unwrap();
-        time::delay_for(Duration::from_secs(5)).await;
-        let images = playlists
-            .get_playlists_images(&playlist.id)
-            .await
-            .unwrap()
-            .data;
-        assert_eq!(images.len(), 1);
-        if let Some(height) = images[0].height {
-            assert_eq!(height, 512);
-        }
-        if let Some(width) = images[0].width {
-            assert_eq!(width, 512);
+        #[cfg(feature = "base64")]
+        {
+            playlists
+                .upload_playlist_cover_file(&playlist.id, "example_image.jpeg")
+                .await
+                .unwrap();
+            time::delay_for(Duration::from_secs(5)).await;
+            let images = playlists
+                .get_playlists_images(&playlist.id)
+                .await
+                .unwrap()
+                .data;
+            assert_eq!(images.len(), 1);
+            if let Some(height) = images[0].height {
+                assert_eq!(height, 512);
+            }
+            if let Some(width) = images[0].width {
+                assert_eq!(width, 512);
+            }
         }
 
         // Unfollow playlist

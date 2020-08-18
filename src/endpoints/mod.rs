@@ -19,9 +19,14 @@
 //! | `cursor`, `before` and `after` | When the function returns a [`CursorPage`](../model/struct.CursorPage.html) or [`TwoWayCursorPage`](../model/struct.TwoWayCursorPage.html), this determines to give the next (`cursor` or `after`) or previous (`before`) page. |
 #![allow(clippy::missing_errors_doc)]
 
+use std::future::Future;
+use std::time::Instant;
+
+use futures_util::future;
+use futures_util::stream::{futures_unordered::FuturesUnordered, TryStreamExt};
 use isocountry::CountryCode;
 
-use crate::Client;
+use crate::{Client, Error, Response};
 
 pub use albums::*;
 pub use artists::*;
@@ -183,6 +188,36 @@ impl TimeRange {
             Self::Short => "short_term",
         }
     }
+}
+
+async fn chunked_sequence<'a, T, I: Iterator, Fut>(
+    chunks: &'a itertools::IntoChunks<I>,
+    f: impl FnMut(itertools::Chunk<'a, I>) -> Fut,
+) -> Result<Response<Vec<T>>, Error>
+where
+    Fut: Future<Output = Result<Response<Vec<T>>, Error>> + 'a,
+{
+    Ok(future::try_join_all(chunks.into_iter().map(f)).await?.into_iter().fold(
+        Response {
+            data: Vec::new(),
+            expires: Instant::now(),
+        },
+        |mut acc, mut response| {
+            acc.data.append(&mut response.data);
+            acc.expires = response.expires;
+            acc
+        },
+    ))
+}
+
+async fn chunked_requests<'a, I: Iterator, Fut>(
+    chunks: &'a itertools::IntoChunks<I>,
+    f: impl FnMut(itertools::Chunk<'a, I>) -> Fut,
+) -> Result<(), Error>
+where
+    Fut: Future<Output = Result<(), Error>> + 'a,
+{
+    chunks.into_iter().map(f).collect::<FuturesUnordered<_>>().try_collect().await
 }
 
 #[cfg(test)]

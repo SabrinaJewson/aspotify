@@ -3,6 +3,7 @@ use std::fmt::Display;
 use itertools::Itertools;
 use serde::Deserialize;
 
+use super::chunked_sequence;
 use crate::{Client, CountryCode, Episode, Error, Response};
 
 /// Endpoint functions relating to episodes.
@@ -36,7 +37,7 @@ impl Episodes<'_> {
 
     /// Get information about several episodes.
     ///
-    /// Maximum 50 IDs. Reading the user's playback points requires `user-read-playback-position`.
+    /// Reading the user's playback points requires `user-read-playback-position`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/episodes/get-several-episodes/).
     pub async fn get_episodes<I: Iterator>(
@@ -52,14 +53,16 @@ impl Episodes<'_> {
             episodes: Vec<Option<Episode>>,
         }
 
-        Ok(self
-            .0
-            .send_json::<Episodes>(self.0.client.get(endpoint!("/v1/episodes")).query(&(
-                ("ids", ids.into_iter().join(",")),
-                market.map(|m| ("market", m.alpha2())),
-            )))
-            .await?
-            .map(|res| res.episodes))
+        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
+            Ok(self
+                .0
+                .send_json::<Episodes>(self.0.client.get(endpoint!("/v1/episodes")).query(&(
+                    ("ids", ids.join(",")),
+                    market.map(|m| ("market", m.alpha2())),
+                )))
+                .await?
+                .map(|res| res.episodes))
+        }).await
     }
 }
 

@@ -14,23 +14,30 @@ edition = "2018"
 reqwest = { version = "0.10.6", features = ["json"] }
 # reqwest doesn't re-export url::{ParseError, Position}
 url = "2.1.1"
-# For Mutex and Delay
-tokio = { version = "0.2.21", features = ["time"] }
+# For the mutex around AccessToken and the Retry-After delay
+tokio = { version = "0.2.22", features = ["time"] }
 # Serde
 serde = { version = "1.0.114", features = ["derive"] }
 serde_millis = "0.1.1"
 serde_json = "1.0.48"
 # Datatypes used in the Spotify schema
-chrono = { version = "0.4.11", features = ["serde"] }
+chrono = { version = "0.4.15", features = ["serde"] }
 isocountry = "0.2.0"
 isolanguage-1 = { version = "0.1.0", features = ["serde_support"] }
 # For generating random state
+# TODO: make this optional
 rand = "0.7.3"
-# For encoding playlist cover images
-base64 = "0.12.3"
-# For joining iterators of T: Display with strings
+# For joining iterators of T: Display with "," and chunking ids into groups
 itertools = "0.9.0"
+# For managing streams
+futures-util = "0.3.5"
+
+# For encoding playlist cover images
+base64 = { version = "0.12.3", optional = true }
 
 [dev-dependencies]
 dotenv = "0.15.0"
 tokio = { version = "0.2.21", features = ["time", "macros"] }
+
+[features]
+default = ["base64"]

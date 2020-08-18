@@ -32,3 +32,8 @@ refresh token that will be used to run all the tests. For more infomation about 
 These tests will make temporary changes to your account, however they will all be reverted. You will
 also need an unrestricted non-private Spotify client open to get all the tests to run successfully,
 and you must not have any songs in your queue.
+
+## TODO
+
+Automatically send multiple requests when the limit is above Spotify's limit for functions that
+return `Page`/`CursorPage`.
