@@ -59,22 +59,29 @@ inherit_playlist_simplified!(
     }
 );
 
-impl From<Playlist> for PlaylistSimplified {
-    fn from(playlist: Playlist) -> Self {
-        Self {
-            collaborative: playlist.collaborative,
-            external_urls: playlist.external_urls,
-            id: playlist.id,
-            images: playlist.images,
-            name: playlist.name,
-            owner: playlist.owner,
-            public: playlist.public,
-            snapshot_id: playlist.snapshot_id,
+impl Playlist {
+    /// Convert to a `PlaylistSimplified`.
+    #[must_use]
+    pub fn simplify(self) -> PlaylistSimplified {
+        PlaylistSimplified {
+            collaborative: self.collaborative,
+            external_urls: self.external_urls,
+            id: self.id,
+            images: self.images,
+            name: self.name,
+            owner: self.owner,
+            public: self.public,
+            snapshot_id: self.snapshot_id,
             tracks: Tracks {
-                total: playlist.tracks.total,
+                total: self.tracks.total,
             },
             item_type: TypePlaylist,
         }
+    }
+}
+impl From<Playlist> for PlaylistSimplified {
+    fn from(playlist: Playlist) -> Self {
+        playlist.simplify()
     }
 }
 

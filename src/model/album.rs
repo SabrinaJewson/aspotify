@@ -109,38 +109,52 @@ inherit_album_not_local!(
     }
 );
 
+impl Album {
+    /// Convert to an `AlbumSimplified`.
+    #[must_use]
+    pub fn simplify(self) -> AlbumSimplified {
+        AlbumSimplified {
+            album_type: Some(self.album_type),
+            artists: self.artists,
+            available_markets: self.available_markets,
+            external_urls: self.external_urls,
+            id: Some(self.id),
+            images: self.images,
+            name: self.name,
+            release_date: Some(self.release_date),
+            release_date_precision: Some(self.release_date_precision),
+            restrictions: self.restrictions,
+            item_type: TypeAlbum,
+        }
+    }
+}
 impl From<Album> for AlbumSimplified {
     fn from(album: Album) -> Self {
-        Self {
-            album_type: Some(album.album_type),
-            artists: album.artists,
-            available_markets: album.available_markets,
-            external_urls: album.external_urls,
-            id: Some(album.id),
-            images: album.images,
-            name: album.name,
-            release_date: Some(album.release_date),
-            release_date_precision: Some(album.release_date_precision),
-            restrictions: album.restrictions,
+        album.simplify()
+    }
+}
+impl ArtistsAlbum {
+    /// Convert to an `AlbumSimplified`.
+    #[must_use]
+    pub fn simplify(self) -> AlbumSimplified {
+        AlbumSimplified {
+            album_type: Some(self.album_type),
+            artists: self.artists,
+            available_markets: self.available_markets,
+            external_urls: self.external_urls,
+            id: Some(self.id),
+            images: self.images,
+            name: self.name,
+            release_date: Some(self.release_date),
+            release_date_precision: Some(self.release_date_precision),
+            restrictions: self.restrictions,
             item_type: TypeAlbum,
         }
     }
 }
 impl From<ArtistsAlbum> for AlbumSimplified {
     fn from(album: ArtistsAlbum) -> Self {
-        Self {
-            album_type: Some(album.album_type),
-            artists: album.artists,
-            available_markets: album.available_markets,
-            external_urls: album.external_urls,
-            id: Some(album.id),
-            images: album.images,
-            name: album.name,
-            release_date: Some(album.release_date),
-            release_date_precision: Some(album.release_date_precision),
-            restrictions: album.restrictions,
-            item_type: TypeAlbum,
-        }
+        album.simplify()
     }
 }
 

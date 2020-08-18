@@ -66,31 +66,45 @@ inherit_user_public!(
     }
 );
 
-impl From<UserPublic> for UserSimplified {
-    fn from(user: UserPublic) -> Self {
-        Self {
-            display_name: user.display_name,
-            external_urls: user.external_urls,
-            id: user.id,
+impl UserPublic {
+    /// Convert to a `UserSimplified`.
+    #[must_use]
+    pub fn simplify(self) -> UserSimplified {
+        UserSimplified {
+            display_name: self.display_name,
+            external_urls: self.external_urls,
+            id: self.id,
             item_type: TypeUser,
         }
     }
 }
-impl From<UserPrivate> for UserPublic {
-    fn from(user: UserPrivate) -> Self {
-        Self {
-            display_name: user.display_name,
-            external_urls: user.external_urls,
-            id: user.id,
-            followers: user.followers,
-            images: user.images,
+impl From<UserPublic> for UserSimplified {
+    fn from(user: UserPublic) -> Self {
+        user.simplify()
+    }
+}
+impl UserPrivate {
+    /// Convert to a `UserPublic`.
+    #[must_use]
+    pub fn publicize(self) -> UserPublic {
+        UserPublic {
+            display_name: self.display_name,
+            external_urls: self.external_urls,
+            id: self.id,
+            followers: self.followers,
+            images: self.images,
             item_type: TypeUser,
         }
+    }
+    /// Convert to a `UserSimplified`.
+    #[must_use]
+    pub fn simplify(self) -> UserSimplified {
+        self.publicize().simplify()
     }
 }
 impl From<UserPrivate> for UserSimplified {
     fn from(user: UserPrivate) -> Self {
-        Self::from(UserPublic::from(user))
+        user.simplify()
     }
 }
 

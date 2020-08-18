@@ -48,13 +48,20 @@ inherit_artist_simplified!(
     }
 );
 
-impl From<Artist> for ArtistSimplified {
-    fn from(artist: Artist) -> Self {
-        Self {
-            external_urls: artist.external_urls,
-            id: Some(artist.id),
-            name: artist.name,
+impl Artist {
+    /// Convert to an `ArtistSimplified`.
+    #[must_use]
+    pub fn simplify(self) -> ArtistSimplified {
+        ArtistSimplified {
+            external_urls: self.external_urls,
+            id: Some(self.id),
+            name: self.name,
             item_type: TypeArtist,
         }
+    }
+}
+impl From<Artist> for ArtistSimplified {
+    fn from(artist: Artist) -> Self {
+        artist.simplify()
     }
 }
