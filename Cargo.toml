@@ -1,7 +1,7 @@
 [package]
 name = "aspotify"
 description = "Asynchronous client for the Spotify API"
-version = "0.4.0"
+version = "0.5.0"
 readme = "README.md"
 repository = "https://github.com/KaiJewson/aspotify"
 keywords = ["Spotify", "API", "Asynchronous"]
@@ -24,14 +24,13 @@ serde_json = "1.0.48"
 chrono = { version = "0.4.15", features = ["serde"] }
 isocountry = "0.2.0"
 isolanguage-1 = { version = "0.1.0", features = ["serde_support"] }
-# For generating random state
-# TODO: make this optional
-rand = "0.7.3"
 # For joining iterators of T: Display with "," and chunking ids into groups
 itertools = "0.9.0"
 # For managing streams
 futures-util = "0.3.5"
 
+# For generating random state
+rand = { version = "0.7.3", optional = true }
 # For encoding playlist cover images
 base64 = { version = "0.12.3", optional = true }
 
@@ -40,4 +39,8 @@ dotenv = "0.15.0"
 tokio = { version = "0.2.21", features = ["time", "macros"] }
 
 [features]
-default = ["base64"]
+default = ["base64", "rand"]
+
+[[example]]
+name = "refresh_file"
+required-features = ["rand"]
