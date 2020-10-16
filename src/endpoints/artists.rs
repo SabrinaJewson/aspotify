@@ -2,7 +2,6 @@
 
 use std::fmt::Display;
 
-use isocountry::CountryCode;
 use itertools::Itertools;
 use serde::Deserialize;
 
@@ -68,7 +67,7 @@ impl Artists<'_> {
         include_groups: Option<&[AlbumGroup]>,
         limit: usize,
         offset: usize,
-        country: Option<CountryCode>,
+        market: Option<Market>,
     ) -> Result<Response<Page<ArtistsAlbum>>, Error> {
         self.0
             .send_json(
@@ -84,7 +83,7 @@ impl Artists<'_> {
                                 groups.iter().map(|group| group.as_str()).join(","),
                             )
                         }),
-                        country.map(|c| ("country", c.alpha2())),
+                        market.map(Market::query),
                     )),
             )
             .await
