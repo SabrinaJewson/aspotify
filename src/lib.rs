@@ -228,7 +228,7 @@ impl Client {
             // 2 seconds is default retry after time; should never be used if the Spotify API and
             // my code are both correct.
             let wait = wait.unwrap_or(2);
-            tokio::time::delay_for(std::time::Duration::from_secs(wait)).await;
+            tokio::time::sleep(std::time::Duration::from_secs(wait)).await;
         };
         let status = response.status();
         let cache_control = Duration::from_secs(
@@ -461,14 +461,8 @@ impl AccessToken {
 
 fn body_str(req: &reqwest::Request) -> Option<&str> {
     req.body().map(|body| {
-        if let Some(bytes) = body.as_bytes() {
-            if let Ok(string) = std::str::from_utf8(bytes) {
-                string
-            } else {
-                "opaque bytes"
-            }
-        } else {
-            "stream"
-        }
+        body.as_bytes().map_or("stream", |bytes| {
+            std::str::from_utf8(bytes).unwrap_or("opaque bytes")
+        })
     })
 }

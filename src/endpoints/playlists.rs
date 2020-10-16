@@ -596,7 +596,7 @@ mod tests {
                 .upload_playlist_cover_file(&playlist.id, "example_image.jpeg")
                 .await
                 .unwrap();
-            time::delay_for(Duration::from_secs(5)).await;
+            time::sleep(Duration::from_secs(5)).await;
             let images = playlists
                 .get_playlists_images(&playlist.id)
                 .await

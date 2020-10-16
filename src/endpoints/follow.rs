@@ -34,7 +34,8 @@ impl Follow<'_> {
                         .query(&(("type", "artist"), ("ids", ids.join(",")))),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Check if the current user follows some users.
@@ -59,7 +60,8 @@ impl Follow<'_> {
                         .query(&(("type", "user"), ("ids", ids.join(",")))),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Check if some users follow a playlist.
@@ -86,7 +88,8 @@ impl Follow<'_> {
                         .query(&(("ids", user_ids.join(",")),)),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Follow artists.
@@ -111,7 +114,8 @@ impl Follow<'_> {
                         .body("{}"),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Follow users.
@@ -136,7 +140,8 @@ impl Follow<'_> {
                         .body("{}"),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Follow a playlist publicly.
@@ -222,7 +227,8 @@ impl Follow<'_> {
                         .body("{}"),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Unfollow users.
@@ -247,7 +253,8 @@ impl Follow<'_> {
                         .body("{}"),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Unfollow a playlist.

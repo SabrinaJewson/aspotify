@@ -67,7 +67,8 @@ impl Shows<'_> {
                 )))
                 .await?
                 .map(|res| res.shows))
-        }).await
+        })
+        .await
     }
 
     /// Get a show's episodes.

@@ -48,7 +48,8 @@ impl Artists<'_> {
                 )
                 .await?
                 .map(|res| res.artists))
-        }).await
+        })
+        .await
     }
 
     /// Get an artist's albums.
@@ -181,7 +182,7 @@ mod tests {
                 Some(&[AlbumGroup::Single]),
                 2,
                 1,
-                Some(CountryCode::GBR),
+                Some(Market::Country(CountryCode::GBR)),
             )
             .await
             .unwrap()

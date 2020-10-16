@@ -402,7 +402,7 @@ mod tests {
             )
             .await
             .unwrap();
-        time::delay_for(wait_time).await;
+        time::sleep(wait_time).await;
 
         let playback = player
             .get_playback(Some(Market::FromToken))
@@ -443,7 +443,7 @@ mod tests {
             )
             .await
             .unwrap();
-        time::delay_for(wait_time).await;
+        time::sleep(wait_time).await;
         let playing = player
             .get_playing_track(Some(Market::FromToken))
             .await
@@ -463,7 +463,7 @@ mod tests {
             .seek(Duration::from_millis(152_106 - 2), None)
             .await
             .unwrap();
-        time::delay_for(wait_time).await;
+        time::sleep(wait_time).await;
         let playing = player
             .get_playing_track(Some(Market::FromToken))
             .await
@@ -484,7 +484,7 @@ mod tests {
         player.set_repeat(RepeatState::Track, None).await.unwrap();
         player.set_shuffle(true, None).await.unwrap();
         player.set_volume(17, None).await.unwrap();
-        time::delay_for(wait_time).await;
+        time::sleep(wait_time).await;
         let playback = player
             .get_playback(Some(Market::FromToken))
             .await
@@ -497,7 +497,7 @@ mod tests {
         player.set_repeat(RepeatState::Context, None).await.unwrap();
         player.set_shuffle(false, None).await.unwrap();
         player.set_volume(73, None).await.unwrap();
-        time::delay_for(wait_time).await;
+        time::sleep(wait_time).await;
         let playback = player
             .get_playback(Some(Market::FromToken))
             .await
@@ -510,7 +510,7 @@ mod tests {
 
         // Skip previous
         player.skip_prev(None).await.unwrap();
-        time::delay_for(wait_time).await;
+        time::sleep(wait_time).await;
         let playing = player
             .get_playing_track(Some(Market::FromToken))
             .await
@@ -529,7 +529,7 @@ mod tests {
 
         // Skip next
         player.skip_next(None).await.unwrap();
-        time::delay_for(wait_time).await;
+        time::sleep(wait_time).await;
         let playing = player
             .get_playing_track(Some(Market::FromToken))
             .await
@@ -559,7 +559,7 @@ mod tests {
             )
             .await
             .unwrap();
-        time::delay_for(wait_time).await;
+        time::sleep(wait_time).await;
         player
             .get_playing_track(Some(Market::FromToken))
             .await
@@ -569,7 +569,7 @@ mod tests {
 
         // Pause
         player.pause(None).await.unwrap();
-        time::delay_for(wait_time).await;
+        time::sleep(wait_time).await;
         let playback = player
             .get_playback(Some(Market::FromToken))
             .await

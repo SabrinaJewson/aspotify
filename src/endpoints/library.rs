@@ -32,9 +32,9 @@ impl Library<'_> {
                         .query(&(("ids", ids.join(",")),)),
                 )
                 .await
-        }).await
+        })
+        .await
     }
-
 
     /// Check if the current user has saved some shows.
     ///
@@ -58,7 +58,8 @@ impl Library<'_> {
                         .query(&(("ids", ids.join(",")),)),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Check if the current user has saved some tracks.
@@ -83,7 +84,8 @@ impl Library<'_> {
                         .query(&(("ids", ids.join(",")),)),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Get the current user's saved albums.
@@ -168,7 +170,8 @@ impl Library<'_> {
                         .body("{}"),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Unsave some of the current user's saved shows.
@@ -193,7 +196,8 @@ impl Library<'_> {
                         .body("{}"),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Unsave some of the current user's saved tracks.
@@ -218,7 +222,8 @@ impl Library<'_> {
                         .body("{}"),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Save albums for the current user.
@@ -243,7 +248,8 @@ impl Library<'_> {
                         .body("{}"),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Save shows for the current user.
@@ -268,7 +274,8 @@ impl Library<'_> {
                         .body("{}"),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 
     /// Save tracks for the current user.
@@ -293,7 +300,8 @@ impl Library<'_> {
                         .body("{}"),
                 )
                 .await
-        }).await
+        })
+        .await
     }
 }
 
