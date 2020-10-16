@@ -197,17 +197,20 @@ async fn chunked_sequence<'a, T, I: Iterator, Fut>(
 where
     Fut: Future<Output = Result<Response<Vec<T>>, Error>> + 'a,
 {
-    Ok(future::try_join_all(chunks.into_iter().map(f)).await?.into_iter().fold(
-        Response {
-            data: Vec::new(),
-            expires: Instant::now(),
-        },
-        |mut acc, mut response| {
-            acc.data.append(&mut response.data);
-            acc.expires = response.expires;
-            acc
-        },
-    ))
+    Ok(future::try_join_all(chunks.into_iter().map(f))
+        .await?
+        .into_iter()
+        .fold(
+            Response {
+                data: Vec::new(),
+                expires: Instant::now(),
+            },
+            |mut acc, mut response| {
+                acc.data.append(&mut response.data);
+                acc.expires = response.expires;
+                acc
+            },
+        ))
 }
 
 async fn chunked_requests<'a, I: Iterator, Fut>(
@@ -217,7 +220,12 @@ async fn chunked_requests<'a, I: Iterator, Fut>(
 where
     Fut: Future<Output = Result<(), Error>> + 'a,
 {
-    chunks.into_iter().map(f).collect::<FuturesUnordered<_>>().try_collect().await
+    chunks
+        .into_iter()
+        .map(f)
+        .collect::<FuturesUnordered<_>>()
+        .try_collect()
+        .await
 }
 
 #[cfg(test)]

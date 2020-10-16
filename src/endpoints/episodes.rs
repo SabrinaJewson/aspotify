@@ -62,7 +62,8 @@ impl Episodes<'_> {
                 )))
                 .await?
                 .map(|res| res.episodes))
-        }).await
+        })
+        .await
     }
 }
 

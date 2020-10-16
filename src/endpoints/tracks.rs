@@ -55,7 +55,8 @@ impl Tracks<'_> {
                 )
                 .await?
                 .map(|res| res.audio_features))
-        }).await
+        })
+        .await
     }
 
     /// Get information about several tracks.
@@ -77,13 +78,16 @@ impl Tracks<'_> {
         chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
             Ok(self
                 .0
-                .send_json::<Tracks>(self.0.client.get(endpoint!("/v1/tracks")).query(&(
-                    ("ids", ids.join(",")),
-                    market.map(Market::query),
-                )))
+                .send_json::<Tracks>(
+                    self.0
+                        .client
+                        .get(endpoint!("/v1/tracks"))
+                        .query(&(("ids", ids.join(",")), market.map(Market::query))),
+                )
                 .await?
                 .map(|res| res.tracks))
-        }).await
+        })
+        .await
     }
 
     /// Get information about a track.

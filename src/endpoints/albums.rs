@@ -50,13 +50,16 @@ impl Albums<'_> {
         chunked_sequence(&ids.into_iter().chunks(20), |mut ids| async move {
             Ok(self
                 .0
-                .send_json::<Albums>(self.0.client.get(endpoint!("/v1/albums")).query(&(
-                    ("ids", ids.join(",")),
-                    market.map(Market::query),
-                )))
+                .send_json::<Albums>(
+                    self.0
+                        .client
+                        .get(endpoint!("/v1/albums"))
+                        .query(&(("ids", ids.join(",")), market.map(Market::query))),
+                )
                 .await?
                 .map(|res| res.albums))
-        }).await
+        })
+        .await
     }
 
     /// Get an album's tracks.

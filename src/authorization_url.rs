@@ -69,7 +69,7 @@ pub fn authorization_url_with_state(
     scopes: impl IntoIterator<Item = Scope>,
     force_approve: bool,
     redirect_uri: &str,
-    state: &str
+    state: &str,
 ) -> String {
     Url::parse_with_params(
         "https://accounts.spotify.com/authorize",
@@ -110,7 +110,8 @@ pub fn authorization_url(
     use rand::Rng as _;
 
     const STATE_LEN: usize = 16;
-    const STATE_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~";
+    const STATE_CHARS: &[u8] =
+        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~";
 
     let mut rng = rand::thread_rng();
     let mut state = String::with_capacity(STATE_LEN);
@@ -118,5 +119,8 @@ pub fn authorization_url(
         state.push(STATE_CHARS[rng.gen_range(0, STATE_CHARS.len())].into());
     }
 
-    (authorization_url_with_state(client_id, scopes, force_approve, redirect_uri, &state), state)
+    (
+        authorization_url_with_state(client_id, scopes, force_approve, redirect_uri, &state),
+        state,
+    )
 }
