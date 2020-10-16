@@ -67,7 +67,7 @@ impl Artists<'_> {
         include_groups: Option<&[AlbumGroup]>,
         limit: usize,
         offset: usize,
-        market: Option<Market>,
+        country: Option<Market>,
     ) -> Result<Response<Page<ArtistsAlbum>>, Error> {
         self.0
             .send_json(
@@ -83,7 +83,7 @@ impl Artists<'_> {
                                 groups.iter().map(|group| group.as_str()).join(","),
                             )
                         }),
-                        market.map(Market::query),
+                        country.map(|m| ("country", m.as_str())),
                     )),
             )
             .await
