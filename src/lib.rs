@@ -102,6 +102,18 @@ impl Client {
     pub async fn set_refresh_token(&self, refresh_token: Option<String>) {
         self.cache.lock().await.refresh_token = refresh_token;
     }
+    /// Get the client's access token values.
+    pub async fn current_access_token(&self) -> (String, Instant) {
+        let cache = self.cache.lock().await;
+        (cache.token.clone(), cache.expires)
+    }
+    /// Explicitly override the client's access token values. Useful if you acquire the
+    /// access token elsewhere.
+    pub async fn set_current_access_token(&self, token: String, expires: Instant) {
+        let mut cache = self.cache.lock().await;
+        cache.token = token;
+        cache.expires = expires;
+    }
 
     async fn token_request(&self, params: &impl serde::Serialize) -> Result<AccessToken, Error> {
         let request = self
