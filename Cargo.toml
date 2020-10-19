@@ -12,6 +12,8 @@ edition = "2018"
 
 [dependencies]
 reqwest = { version = "0.10.8", features = ["json"] }
+# Reqwest hasn't updated to Tokio 0.3 yet
+tokio-compat-02  = "0.1.0"
 # reqwest doesn't re-export url::{ParseError, Position}
 url = "2.1.1"
 # For the mutex around AccessToken and the Retry-After delay
