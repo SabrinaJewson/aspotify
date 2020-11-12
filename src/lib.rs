@@ -40,17 +40,19 @@ use std::time::{Duration, Instant};
 
 use reqwest::{header, RequestBuilder, Url};
 use serde::de::DeserializeOwned;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, MutexGuard};
 use tokio_compat_02::FutureExt;
 
 pub use authorization_url::*;
 pub use endpoints::*;
+use futures_util::TryFutureExt;
 /// Re-export from [isocountry](https://crates.io/crates/isocountry).
 pub use isocountry::CountryCode;
 /// Re-export from [isolanguage-1](https://crates.io/crates/isolanguage-1).
 pub use isolanguage_1::LanguageCode;
 pub use model::*;
+use std::borrow::Borrow;
 
 mod authorization_url;
 pub mod endpoints;
@@ -116,12 +118,12 @@ impl Client {
         cache.expires = expires;
     }
 
-    async fn token_request(&self, params: &impl serde::Serialize) -> Result<AccessToken, Error> {
+    async fn token_request(&self, params: TokenRequest<'_>) -> Result<AccessToken, Error> {
         let request = self
             .client
             .post("https://accounts.spotify.com/api/token")
             .basic_auth(&self.credentials.id, Some(&self.credentials.secret))
-            .form(params)
+            .form(&params)
             .build()?;
 
         if self.debug {
@@ -180,11 +182,10 @@ impl Client {
             .ok_or_else(|| RedirectedError::AuthFailed(String::new()))?;
 
         let token = self
-            .token_request(&[
-                ("grant_type", "authorization_code"),
-                ("code", code),
-                ("redirect_uri", &url[..url::Position::AfterPath]),
-            ])
+            .token_request(TokenRequest::AuthorizationCode {
+                code: code.borrow(),
+                redirect_uri: &url[..url::Position::AfterPath],
+            })
             .await?;
         *self.cache.lock().await = token;
 
@@ -194,15 +195,20 @@ impl Client {
     async fn access_token(&self) -> Result<MutexGuard<'_, AccessToken>, Error> {
         let mut cache = self.cache.lock().await;
         if Instant::now() >= cache.expires {
-            *cache = self
-                .token_request(&match &cache.refresh_token {
-                    Some(refresh_token) => (
-                        ("grant_type", "refresh_token"),
-                        Some(("refresh_token", refresh_token)),
-                    ),
-                    None => (("grant_type", "client_credentials"), None),
-                })
-                .await?;
+            *cache = match &cache.refresh_token {
+                // Authorization code flow
+                Some(refresh_token) => {
+                    self.token_request(TokenRequest::RefreshToken { refresh_token })
+                        .map_ok(|mut token| {
+                            // Keep hold of refresh_token for next round
+                            token.refresh_token = Some(refresh_token.clone());
+                            token
+                        })
+                        .await?
+                }
+                // Client credentials flow
+                None => self.token_request(TokenRequest::ClientCredentials).await?,
+            }
         }
         Ok(cache)
     }
@@ -435,6 +441,19 @@ impl StdError for RedirectedError {
             _ => return None,
         })
     }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "grant_type", rename_all = "snake_case")]
+enum TokenRequest<'a> {
+    RefreshToken {
+        refresh_token: &'a String,
+    },
+    ClientCredentials,
+    AuthorizationCode {
+        code: &'a str,
+        redirect_uri: &'a str,
+    },
 }
 
 #[derive(Debug, Deserialize)]
