@@ -245,7 +245,7 @@ impl Player<'_> {
     ///
     /// `play`, when set, controls what to play, and what offset in the context to start playing at.
     /// `position` controls how far into the current track to play; if it is longer than the current
-    /// track, then the next track will play.
+    /// track, then the next track will play. To keep the existing content and position, use `resume`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/player/start-a-users-playback/).
     pub async fn play<I: Iterator>(
@@ -300,6 +300,26 @@ impl Player<'_> {
                     .put(endpoint!("/v1/me/player/play"))
                     .query(&(device_id.map(device_query)))
                     .body(serde_json::to_string(&body)?),
+            )
+            .await
+    }
+
+    /// Resume playback (Beta).
+    ///
+    /// Requires `user-modify-playback-state`. This action complete asynchronously, meaning you will
+    /// not know if it succeeded unless you check.
+    ///
+    /// Resumes playback where it was paused. To specify a content or offset, use `play` instead.
+    ///
+    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/player/start-a-users-playback/).
+    pub async fn resume(self, device_id: Option<&str>) -> Result<(), Error> {
+        self.0
+            .send_empty(
+                self.0
+                    .client
+                    .put(endpoint!("/v1/me/player/play"))
+                    .query(&(device_id.map(device_query),))
+                    .body("{}"),
             )
             .await
     }
