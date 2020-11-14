@@ -36,6 +36,7 @@ use std::env::{self, VarError};
 use std::error::Error as StdError;
 use std::ffi::OsStr;
 use std::fmt::{self, Display, Formatter};
+use std::ops::Deref;
 use std::time::{Duration, Instant};
 
 use reqwest::{header, RequestBuilder, Url};
@@ -46,13 +47,11 @@ use tokio_compat_02::FutureExt;
 
 pub use authorization_url::*;
 pub use endpoints::*;
-use futures_util::TryFutureExt;
 /// Re-export from [isocountry](https://crates.io/crates/isocountry).
 pub use isocountry::CountryCode;
 /// Re-export from [isolanguage-1](https://crates.io/crates/isolanguage-1).
 pub use isolanguage_1::LanguageCode;
 pub use model::*;
-use std::borrow::Borrow;
 
 mod authorization_url;
 pub mod endpoints;
@@ -183,7 +182,7 @@ impl Client {
 
         let token = self
             .token_request(TokenRequest::AuthorizationCode {
-                code: code.borrow(),
+                code: code.deref(),
                 redirect_uri: &url[..url::Position::AfterPath],
             })
             .await?;
@@ -195,16 +194,16 @@ impl Client {
     async fn access_token(&self) -> Result<MutexGuard<'_, AccessToken>, Error> {
         let mut cache = self.cache.lock().await;
         if Instant::now() >= cache.expires {
-            *cache = match &cache.refresh_token {
+            *cache = match cache.refresh_token.take() {
                 // Authorization code flow
                 Some(refresh_token) => {
-                    self.token_request(TokenRequest::RefreshToken { refresh_token })
-                        .map_ok(|mut token| {
-                            // Keep hold of refresh_token for next round
-                            token.refresh_token = Some(refresh_token.clone());
-                            token
+                    let mut token = self
+                        .token_request(TokenRequest::RefreshToken {
+                            refresh_token: &refresh_token,
                         })
-                        .await?
+                        .await?;
+                    token.refresh_token = Some(refresh_token);
+                    token
                 }
                 // Client credentials flow
                 None => self.token_request(TokenRequest::ClientCredentials).await?,
