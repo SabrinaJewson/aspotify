@@ -20,10 +20,10 @@
 #![allow(clippy::missing_errors_doc)]
 
 use std::future::Future;
+use std::iter;
 use std::time::Instant;
 
-use futures_util::future;
-use futures_util::stream::{futures_unordered::FuturesUnordered, TryStreamExt};
+use futures_util::stream::{FuturesOrdered, FuturesUnordered, StreamExt, TryStreamExt};
 use isocountry::CountryCode;
 
 use crate::{Client, Error, Response};
@@ -190,42 +190,52 @@ impl TimeRange {
     }
 }
 
-async fn chunked_sequence<'a, T, I: Iterator, Fut>(
-    chunks: &'a itertools::IntoChunks<I>,
-    f: impl FnMut(itertools::Chunk<'a, I>) -> Fut,
+type Chunk<'a, I> = iter::Take<&'a mut iter::Peekable<I>>;
+
+async fn chunked_sequence<I: IntoIterator, Fut, T>(
+    items: I,
+    chunk_size: usize,
+    mut f: impl FnMut(Chunk<'_, I::IntoIter>) -> Fut,
 ) -> Result<Response<Vec<T>>, Error>
 where
-    Fut: Future<Output = Result<Response<Vec<T>>, Error>> + 'a,
+    Fut: Future<Output = Result<Response<Vec<T>>, Error>>,
 {
-    Ok(future::try_join_all(chunks.into_iter().map(f))
-        .await?
-        .into_iter()
-        .fold(
-            Response {
-                data: Vec::new(),
-                expires: Instant::now(),
-            },
-            |mut acc, mut response| {
-                acc.data.append(&mut response.data);
-                acc.expires = response.expires;
-                acc
-            },
-        ))
+    let mut items = items.into_iter().peekable();
+    let mut futures = FuturesOrdered::new();
+
+    while items.peek().is_some() {
+        futures.push(f(items.by_ref().take(chunk_size)));
+    }
+
+    let mut response = Response {
+        data: Vec::new(),
+        expires: Instant::now(),
+    };
+
+    while let Some(mut r) = futures.next().await.transpose()? {
+        response.data.append(&mut r.data);
+        response.expires = r.expires;
+    }
+
+    Ok(response)
 }
 
-async fn chunked_requests<'a, I: Iterator, Fut>(
-    chunks: &'a itertools::IntoChunks<I>,
-    f: impl FnMut(itertools::Chunk<'a, I>) -> Fut,
+async fn chunked_requests<I: IntoIterator, Fut>(
+    items: I,
+    chunk_size: usize,
+    mut f: impl FnMut(Chunk<'_, I::IntoIter>) -> Fut,
 ) -> Result<(), Error>
 where
-    Fut: Future<Output = Result<(), Error>> + 'a,
+    Fut: Future<Output = Result<(), Error>>,
 {
-    chunks
-        .into_iter()
-        .map(f)
-        .collect::<FuturesUnordered<_>>()
-        .try_collect()
-        .await
+    let mut items = items.into_iter().peekable();
+    let futures = FuturesUnordered::new();
+
+    while items.peek().is_some() {
+        futures.push(f(items.by_ref().take(chunk_size)));
+    }
+
+    futures.try_collect().await
 }
 
 #[cfg(test)]

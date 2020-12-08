@@ -36,7 +36,6 @@ use std::env::{self, VarError};
 use std::error::Error as StdError;
 use std::ffi::OsStr;
 use std::fmt::{self, Display, Formatter};
-use std::ops::Deref;
 use std::time::{Duration, Instant};
 
 use reqwest::{header, RequestBuilder, Url};
@@ -182,7 +181,7 @@ impl Client {
 
         let token = self
             .token_request(TokenRequest::AuthorizationCode {
-                code: code.deref(),
+                code: &*code,
                 redirect_uri: &url[..url::Position::AfterPath],
             })
             .await?;
@@ -222,7 +221,11 @@ impl Client {
         }
 
         let response = loop {
-            let response = self.client.execute(request.try_clone().unwrap()).compat().await?;
+            let response = self
+                .client
+                .execute(request.try_clone().unwrap())
+                .compat()
+                .await?;
             if response.status() != 429 {
                 break response;
             }
@@ -405,6 +408,8 @@ pub enum RedirectedError {
     /// The URL has no state parameter, or the state parameter was incorrect.
     IncorrectState,
     /// The user has not accepted the request or an error occured in Spotify.
+    ///
+    /// This contains the string returned by Spotify in the `error` parameter.
     AuthFailed(String),
     /// An error occurred getting the access token.
     Token(Error),

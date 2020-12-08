@@ -58,15 +58,12 @@ impl Shows<'_> {
             shows: Vec<ShowSimplified>,
         }
 
-        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
-            Ok(self
-                .0
-                .send_json::<Shows>(self.0.client.get(endpoint!("/v1/shows")).query(&(
-                    ("ids", ids.join(",")),
-                    market.map(|c| ("market", c.alpha2())),
-                )))
-                .await?
-                .map(|res| res.shows))
+        chunked_sequence(ids, 50, |mut ids| {
+            let req = self.0.client.get(endpoint!("/v1/shows")).query(&(
+                ("ids", ids.join(",")),
+                market.map(|c| ("market", c.alpha2())),
+            ));
+            async move { Ok(self.0.send_json::<Shows>(req).await?.map(|res| res.shows)) }
         })
         .await
     }

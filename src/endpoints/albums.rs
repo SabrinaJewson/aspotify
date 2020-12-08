@@ -47,17 +47,13 @@ impl Albums<'_> {
             albums: Vec<Album>,
         }
 
-        chunked_sequence(&ids.into_iter().chunks(20), |mut ids| async move {
-            Ok(self
+        chunked_sequence(ids, 20, |mut ids| {
+            let req = self
                 .0
-                .send_json::<Albums>(
-                    self.0
-                        .client
-                        .get(endpoint!("/v1/albums"))
-                        .query(&(("ids", ids.join(",")), market.map(Market::query))),
-                )
-                .await?
-                .map(|res| res.albums))
+                .client
+                .get(endpoint!("/v1/albums"))
+                .query(&(("ids", ids.join(",")), market.map(Market::query)));
+            async move { Ok(self.0.send_json::<Albums>(req).await?.map(|res| res.albums)) }
         })
         .await
     }

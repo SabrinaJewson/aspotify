@@ -23,15 +23,13 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
-            self.0
-                .send_json(
-                    self.0
-                        .client
-                        .get(endpoint!("/v1/me/albums/contains"))
-                        .query(&(("ids", ids.join(",")),)),
-                )
-                .await
+        chunked_sequence(ids, 50, |mut ids| {
+            let req = self
+                .0
+                .client
+                .get(endpoint!("/v1/me/albums/contains"))
+                .query(&(("ids", ids.join(",")),));
+            async move { self.0.send_json(req).await }
         })
         .await
     }
@@ -49,15 +47,13 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
-            self.0
-                .send_json(
-                    self.0
-                        .client
-                        .get(endpoint!("/v1/me/shows/contains"))
-                        .query(&(("ids", ids.join(",")),)),
-                )
-                .await
+        chunked_sequence(ids, 50, |mut ids| {
+            let req = self
+                .0
+                .client
+                .get(endpoint!("/v1/me/shows/contains"))
+                .query(&(("ids", ids.join(",")),));
+            async move { self.0.send_json(req).await }
         })
         .await
     }
@@ -75,15 +71,13 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
-            self.0
-                .send_json(
-                    self.0
-                        .client
-                        .get(endpoint!("/v1/me/tracks/contains"))
-                        .query(&(("ids", ids.join(",")),)),
-                )
-                .await
+        chunked_sequence(ids, 50, |mut ids| {
+            let req = self
+                .0
+                .client
+                .get(endpoint!("/v1/me/tracks/contains"))
+                .query(&(("ids", ids.join(",")),));
+            async move { self.0.send_json(req).await }
         })
         .await
     }
@@ -160,16 +154,14 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
-            self.0
-                .send_empty(
-                    self.0
-                        .client
-                        .delete(endpoint!("/v1/me/albums"))
-                        .query(&(("ids", ids.join(",")),))
-                        .body("{}"),
-                )
-                .await
+        chunked_requests(ids, 50, |mut ids| {
+            let req = self
+                .0
+                .client
+                .delete(endpoint!("/v1/me/albums"))
+                .query(&(("ids", ids.join(",")),))
+                .body("{}");
+            async move { self.0.send_empty(req).await }
         })
         .await
     }
@@ -186,16 +178,14 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
-            self.0
-                .send_empty(
-                    self.0
-                        .client
-                        .delete(endpoint!("/v1/me/shows"))
-                        .query(&(("ids", ids.join(",")),))
-                        .body("{}"),
-                )
-                .await
+        chunked_requests(ids, 50, |mut ids| {
+            let req = self
+                .0
+                .client
+                .delete(endpoint!("/v1/me/shows"))
+                .query(&(("ids", ids.join(",")),))
+                .body("{}");
+            async move { self.0.send_empty(req).await }
         })
         .await
     }
@@ -212,16 +202,14 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
-            self.0
-                .send_empty(
-                    self.0
-                        .client
-                        .delete(endpoint!("/v1/me/tracks"))
-                        .query(&(("ids", ids.join(",")),))
-                        .body("{}"),
-                )
-                .await
+        chunked_requests(ids, 50, |mut ids| {
+            let req = self
+                .0
+                .client
+                .delete(endpoint!("/v1/me/tracks"))
+                .query(&(("ids", ids.join(",")),))
+                .body("{}");
+            async move { self.0.send_empty(req).await }
         })
         .await
     }
@@ -238,16 +226,14 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
-            self.0
-                .send_empty(
-                    self.0
-                        .client
-                        .put(endpoint!("/v1/me/albums"))
-                        .query(&(("ids", ids.join(",")),))
-                        .body("{}"),
-                )
-                .await
+        chunked_requests(ids, 50, |mut ids| {
+            let req = self
+                .0
+                .client
+                .put(endpoint!("/v1/me/albums"))
+                .query(&(("ids", ids.join(",")),))
+                .body("{}");
+            async move { self.0.send_empty(req).await }
         })
         .await
     }
@@ -264,16 +250,14 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
-            self.0
-                .send_empty(
-                    self.0
-                        .client
-                        .put(endpoint!("/v1/me/shows"))
-                        .query(&(("ids", ids.join(",")),))
-                        .body("{}"),
-                )
-                .await
+        chunked_requests(ids, 50, |mut ids| {
+            let req = self
+                .0
+                .client
+                .put(endpoint!("/v1/me/shows"))
+                .query(&(("ids", ids.join(",")),))
+                .body("{}");
+            async move { self.0.send_empty(req).await }
         })
         .await
     }
@@ -290,16 +274,14 @@ impl Library<'_> {
     where
         I::Item: Display,
     {
-        chunked_requests(&ids.into_iter().chunks(50), |mut ids| async move {
-            self.0
-                .send_empty(
-                    self.0
-                        .client
-                        .put(endpoint!("/v1/me/tracks"))
-                        .query(&(("ids", ids.join(",")),))
-                        .body("{}"),
-                )
-                .await
+        chunked_requests(ids, 50, |mut ids| {
+            let req = self
+                .0
+                .client
+                .put(endpoint!("/v1/me/tracks"))
+                .query(&(("ids", ids.join(",")),))
+                .body("{}");
+            async move { self.0.send_empty(req).await }
         })
         .await
     }
