@@ -37,17 +37,19 @@ impl Artists<'_> {
             artists: Vec<Artist>,
         };
 
-        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
-            Ok(self
+        chunked_sequence(ids, 50, |mut ids| {
+            let req = self
                 .0
-                .send_json::<Artists>(
-                    self.0
-                        .client
-                        .get(endpoint!("/v1/artists"))
-                        .query(&(("ids", ids.join(",")),)),
-                )
-                .await?
-                .map(|res| res.artists))
+                .client
+                .get(endpoint!("/v1/artists"))
+                .query(&(("ids", ids.join(",")),));
+            async move {
+                Ok(self
+                    .0
+                    .send_json::<Artists>(req)
+                    .await?
+                    .map(|res| res.artists))
+            }
         })
         .await
     }

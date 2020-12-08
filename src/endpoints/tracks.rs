@@ -44,17 +44,19 @@ impl Tracks<'_> {
             audio_features: Vec<AudioFeatures>,
         }
 
-        chunked_sequence(&ids.into_iter().chunks(100), |mut ids| async move {
-            Ok(self
+        chunked_sequence(ids, 100, |mut ids| {
+            let req = self
                 .0
-                .send_json::<ManyAudioFeatures>(
-                    self.0
-                        .client
-                        .get(endpoint!("/v1/audio-features"))
-                        .query(&(("ids", ids.join(",")),)),
-                )
-                .await?
-                .map(|res| res.audio_features))
+                .client
+                .get(endpoint!("/v1/audio-features"))
+                .query(&(("ids", ids.join(",")),));
+            async move {
+                Ok(self
+                    .0
+                    .send_json::<ManyAudioFeatures>(req)
+                    .await?
+                    .map(|res| res.audio_features))
+            }
         })
         .await
     }
@@ -75,17 +77,13 @@ impl Tracks<'_> {
             tracks: Vec<Track>,
         };
 
-        chunked_sequence(&ids.into_iter().chunks(50), |mut ids| async move {
-            Ok(self
+        chunked_sequence(ids, 50, |mut ids| {
+            let req = self
                 .0
-                .send_json::<Tracks>(
-                    self.0
-                        .client
-                        .get(endpoint!("/v1/tracks"))
-                        .query(&(("ids", ids.join(",")), market.map(Market::query))),
-                )
-                .await?
-                .map(|res| res.tracks))
+                .client
+                .get(endpoint!("/v1/tracks"))
+                .query(&(("ids", ids.join(",")), market.map(Market::query)));
+            async move { Ok(self.0.send_json::<Tracks>(req).await?.map(|res| res.tracks)) }
         })
         .await
     }
