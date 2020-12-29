@@ -34,9 +34,9 @@ impl Albums<'_> {
     /// Get information about several albums.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/albums/get-several-albums/).
-    pub async fn get_albums<I: Iterator>(
+    pub async fn get_albums<I: IntoIterator>(
         self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        ids: I,
         market: Option<Market>,
     ) -> Result<Response<Vec<Album>>, Error>
     where

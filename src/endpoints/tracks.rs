@@ -32,9 +32,9 @@ impl Tracks<'_> {
     /// Get audio features for several tracks.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/).
-    pub async fn get_features_tracks<I: Iterator>(
+    pub async fn get_features_tracks<I: IntoIterator>(
         self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        ids: I,
     ) -> Result<Response<Vec<AudioFeatures>>, Error>
     where
         I::Item: Display,
@@ -64,9 +64,9 @@ impl Tracks<'_> {
     /// Get information about several tracks.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-tracks/).
-    pub async fn get_tracks<I: Iterator>(
+    pub async fn get_tracks<I: IntoIterator>(
         self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        ids: I,
         market: Option<Market>,
     ) -> Result<Response<Vec<Track>>, Error>
     where

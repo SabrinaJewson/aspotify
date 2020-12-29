@@ -16,9 +16,9 @@ impl Library<'_> {
     /// has saved each album. Requires `user-library-read`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/check-users-saved-albums/).
-    pub async fn user_saved_albums<I: Iterator>(
+    pub async fn user_saved_albums<I: IntoIterator>(
         self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        ids: I,
     ) -> Result<Response<Vec<bool>>, Error>
     where
         I::Item: Display,
@@ -40,9 +40,9 @@ impl Library<'_> {
     /// has saved each album. Requires `user-library-read`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/check-users-saved-shows/).
-    pub async fn user_saved_shows<I: Iterator>(
+    pub async fn user_saved_shows<I: IntoIterator>(
         self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        ids: I,
     ) -> Result<Response<Vec<bool>>, Error>
     where
         I::Item: Display,
@@ -64,9 +64,9 @@ impl Library<'_> {
     /// has saved each track. Requires `user-library-read`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/check-users-saved-tracks/).
-    pub async fn user_saved_tracks<I: Iterator>(
+    pub async fn user_saved_tracks<I: IntoIterator>(
         self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        ids: I,
     ) -> Result<Response<Vec<bool>>, Error>
     where
         I::Item: Display,
@@ -147,10 +147,7 @@ impl Library<'_> {
     /// Requires `user-library-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/remove-albums-user/).
-    pub async fn unsave_albums<I: Iterator>(
-        self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
-    ) -> Result<(), Error>
+    pub async fn unsave_albums<I: IntoIterator>(self, ids: I) -> Result<(), Error>
     where
         I::Item: Display,
     {
@@ -171,10 +168,7 @@ impl Library<'_> {
     /// Requires `user-library-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/remove-shows-user/).
-    pub async fn unsave_shows<I: Iterator>(
-        self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
-    ) -> Result<(), Error>
+    pub async fn unsave_shows<I: IntoIterator>(self, ids: I) -> Result<(), Error>
     where
         I::Item: Display,
     {
@@ -195,10 +189,7 @@ impl Library<'_> {
     /// Requires `user-library-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/remove-tracks-user/).
-    pub async fn unsave_tracks<I: Iterator>(
-        self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
-    ) -> Result<(), Error>
+    pub async fn unsave_tracks<I: IntoIterator>(self, ids: I) -> Result<(), Error>
     where
         I::Item: Display,
     {
@@ -219,10 +210,7 @@ impl Library<'_> {
     /// Requires `user-library-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/save-albums-user/).
-    pub async fn save_albums<I: Iterator>(
-        self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
-    ) -> Result<(), Error>
+    pub async fn save_albums<I: IntoIterator>(self, ids: I) -> Result<(), Error>
     where
         I::Item: Display,
     {
@@ -243,10 +231,7 @@ impl Library<'_> {
     /// Requires `user-library-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/save-shows-user/).
-    pub async fn save_shows<I: Iterator>(
-        self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
-    ) -> Result<(), Error>
+    pub async fn save_shows<I: IntoIterator>(self, ids: I) -> Result<(), Error>
     where
         I::Item: Display,
     {
@@ -267,10 +252,7 @@ impl Library<'_> {
     /// Requires `user-library-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/library/save-albums-user/).
-    pub async fn save_tracks<I: Iterator>(
-        self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
-    ) -> Result<(), Error>
+    pub async fn save_tracks<I: IntoIterator>(self, ids: I) -> Result<(), Error>
     where
         I::Item: Display,
     {

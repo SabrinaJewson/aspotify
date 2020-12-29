@@ -18,9 +18,9 @@ impl Follow<'_> {
     /// `user-follow-read`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-current-user-follows/).
-    pub async fn user_follows_artists<I: Iterator>(
+    pub async fn user_follows_artists<I: IntoIterator>(
         self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        ids: I,
     ) -> Result<Response<Vec<bool>>, Error>
     where
         I::Item: Display,
@@ -42,9 +42,9 @@ impl Follow<'_> {
     /// `user-follow-read`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-current-user-follows/).
-    pub async fn user_follows_users<I: Iterator>(
+    pub async fn user_follows_users<I: IntoIterator>(
         self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        ids: I,
     ) -> Result<Response<Vec<bool>>, Error>
     where
         I::Item: Display,
@@ -67,10 +67,10 @@ impl Follow<'_> {
     /// requires `playlist-read-private`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/check-user-following-playlist/).
-    pub async fn users_follow_playlist<I: Iterator>(
+    pub async fn users_follow_playlist<I: IntoIterator>(
         self,
         id: &str,
-        user_ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        user_ids: I,
     ) -> Result<Response<Vec<bool>>, Error>
     where
         I::Item: Display,
@@ -91,10 +91,7 @@ impl Follow<'_> {
     /// Requires `user-follow-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/).
-    pub async fn follow_artists<I: Iterator>(
-        self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
-    ) -> Result<(), Error>
+    pub async fn follow_artists<I: IntoIterator>(self, ids: I) -> Result<(), Error>
     where
         I::Item: Display,
     {
@@ -115,10 +112,7 @@ impl Follow<'_> {
     /// Requires `user-follow-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/).
-    pub async fn follow_users<I: Iterator>(
-        self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
-    ) -> Result<(), Error>
+    pub async fn follow_users<I: IntoIterator>(self, ids: I) -> Result<(), Error>
     where
         I::Item: Display,
     {
@@ -200,10 +194,7 @@ impl Follow<'_> {
     /// Requires `user-follow-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/).
-    pub async fn unfollow_artists<I: Iterator>(
-        self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
-    ) -> Result<(), Error>
+    pub async fn unfollow_artists<I: IntoIterator>(self, ids: I) -> Result<(), Error>
     where
         I::Item: Display,
     {
@@ -224,10 +215,7 @@ impl Follow<'_> {
     /// Requires `user-follow-modify`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/).
-    pub async fn unfollow_users<I: Iterator>(
-        self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
-    ) -> Result<(), Error>
+    pub async fn unfollow_users<I: IntoIterator>(self, ids: I) -> Result<(), Error>
     where
         I::Item: Display,
     {

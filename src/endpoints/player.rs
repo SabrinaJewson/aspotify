@@ -248,9 +248,9 @@ impl Player<'_> {
     /// track, then the next track will play. To keep the existing content and position, use `resume`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/player/start-a-users-playback/).
-    pub async fn play<I: Iterator>(
+    pub async fn play<I: IntoIterator>(
         self,
-        play: Option<Play<'_, impl IntoIterator<IntoIter = I, Item = I::Item>>>,
+        play: Option<Play<'_, I>>,
         position: Option<Duration>,
         device_id: Option<&str>,
     ) -> Result<(), Error>
