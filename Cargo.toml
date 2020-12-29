@@ -1,13 +1,13 @@
 [package]
 name = "aspotify"
 description = "Asynchronous client for the Spotify API"
-version = "0.6.2"
+version = "0.6.3"
 readme = "README.md"
 repository = "https://github.com/KaiJewson/aspotify"
 keywords = ["Spotify", "API", "Asynchronous"]
 categories = ["api-bindings", "asynchronous", "authentication", "web-programming", "web-programming::http-client"]
 license = "MIT OR Apache-2.0"
-authors = ["KaiJewson <58880148+KaiJewson@users.noreply.github.com>"]
+authors = ["KaiJewson <kai.jewson@gmail.com>"]
 edition = "2018"
 
 [dependencies]
