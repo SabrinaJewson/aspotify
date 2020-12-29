@@ -455,7 +455,7 @@ mod tests {
         player
             .play(
                 Some(Play::Tracks(&[
-                    "2Wbz0QcXCVYmuBgOwUV6KU",
+                    "0MSqR4unoY5KReMoOP6E2D",
                     "0vjYxBDAcflD0358arIVZG",
                 ])),
                 None,
@@ -470,13 +470,13 @@ mod tests {
             .unwrap()
             .data
             .unwrap();
-        assert!(playing.progress.unwrap() < Duration::from_secs(2));
+        assert!(playing.progress.unwrap() < Duration::from_secs(4));
         assert!(playing.is_playing);
         let track = match playing.item.unwrap() {
             PlayingType::Track(item) => item,
             _ => panic!(),
         };
-        assert_eq!(track.id.unwrap(), "2Wbz0QcXCVYmuBgOwUV6KU");
+        assert_eq!(track.id.unwrap(), "0MSqR4unoY5KReMoOP6E2D");
 
         // Seek to 2ms before end
         player
@@ -544,7 +544,7 @@ mod tests {
             }
             .id
             .unwrap(),
-            "2Wbz0QcXCVYmuBgOwUV6KU"
+            "0MSqR4unoY5KReMoOP6E2D"
         );
 
         // Skip next
