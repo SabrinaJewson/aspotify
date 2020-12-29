@@ -50,7 +50,7 @@ struct ModeVisitor;
 
 impl<'de> Visitor<'de> for ModeVisitor {
     type Value = Mode;
-    fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+    fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_str("a mode which is 0 (minor) or 1 (major)")
     }
     fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
@@ -92,7 +92,7 @@ mod serde_mode_opt {
     struct ModeOptVisitor;
     impl<'de> Visitor<'de> for ModeOptVisitor {
         type Value = Option<Mode>;
-        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+        fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
             f.write_str("-1 or a mode")
         }
         fn visit_i64<E: de::Error>(self, v: i64) -> Result<Self::Value, E> {
@@ -133,7 +133,7 @@ mod serde_key_opt {
     struct KeyOptVisitor;
     impl<'de> Visitor<'de> for KeyOptVisitor {
         type Value = Option<u32>;
-        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+        fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
             f.write_str("-1 or a key")
         }
         fn visit_i64<E: de::Error>(self, v: i64) -> Result<Self::Value, E> {
@@ -203,8 +203,8 @@ pub struct TimeInterval {
 
 /// A section of a track.
 ///
-/// See
-/// [here](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/#section-object)
+/// See [the Spotify docs for a section
+/// object](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/#section-object)
 /// for more information.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[allow(missing_docs)]
@@ -227,8 +227,8 @@ pub struct Section {
 
 /// A segment in a track.
 ///
-/// See
-/// [here](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/#segment-object)
+/// See [the Spotify docs for a segment
+/// object](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/#segment-object)
 /// for more information.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[allow(missing_docs)]

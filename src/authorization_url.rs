@@ -30,8 +30,16 @@ pub enum Scope {
 
 impl Scope {
     /// Get the scope as a string (in `kebab-case` like Spotify requires).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let scope = aspotify::Sope::UserReadEmail;
+    ///
+    /// assert_eq!(scope.as_str(), "user-read-email");
+    /// ```
     #[must_use]
-    pub fn as_str(self) -> &'static str {
+    pub const fn as_str(self) -> &'static str {
         match self {
             Self::UgcImageUpload => "ugc-image-upload",
             Self::UserReadPlaybackState => "user-read-playback-state",
@@ -56,12 +64,12 @@ impl Scope {
     }
 }
 
-/// Like [`authorization_url`](fn.authorization_url.html), but you supply your own state.
+/// Like [`authorization_url`], but you supply your own state.
 ///
 /// It is recommended to use randomly generated state for security, so use this if you wish to use
 /// your own random state generator.
 ///
-/// This function, unlike `authorization_url` does not require features to be activated.
+/// This function, unlike [`authorization_url`] does not require features to be activated.
 ///
 /// See the docs of the other function for information about the parameters.
 pub fn authorization_url_with_state(
@@ -87,7 +95,7 @@ pub fn authorization_url_with_state(
 }
 
 /// Get the URL to redirect the user's browser to so that the URL can be generated for the
-/// `Client::redirected` function.
+/// [`Client::redirected`](super::Client::redirected) function.
 ///
 /// `force_approve`, if set, forces the user to approve the app again even if they already have.
 /// Make sure that you have whitelisted the redirect uri in your Spotify dashboard, and

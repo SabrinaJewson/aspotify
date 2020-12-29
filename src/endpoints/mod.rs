@@ -14,9 +14,9 @@
 //! | `country` | Limits the request to one particular country, so that resources not available in the country will not appear in the results. |
 //! | `market` | Limits the request to one particular country, and applies [Track Relinking](https://developer.spotify.com/documentation/general/guides/track-relinking-guide/). |
 //! | `locale` | The language of the response. It consists of an ISO-639 language code and an ISO-3166 country code (for, example, En and GBR is British English). |
-//! | `limit` | When the function returns a [`Page`](../model/struct.Page.html), [`CursorPage`](../model/struct.CursorPage.html) or [`TwoWayCursorPage`](../model/struct.TwoWayCursorPage.html), this determines the maximum length of the page. |
-//! | `offset` | When the function returns a [`Page`](../model/struct.Page.html), this determines what index in the larger list the page starts at. |
-//! | `cursor`, `before` and `after` | When the function returns a [`CursorPage`](../model/struct.CursorPage.html) or [`TwoWayCursorPage`](../model/struct.TwoWayCursorPage.html), this determines to give the next (`cursor` or `after`) or previous (`before`) page. |
+//! | `limit` | When the function returns a [`Page`](crate::Page), [`CursorPage`](crate::CursorPage) or [`TwoWayCursorPage`](crate::TwoWayCursorPage), this determines the maximum length of the page. |
+//! | `offset` | When the function returns a [`Page`](crate::Page), this determines what index in the larger list the page starts at. |
+//! | `cursor`, `before` and `after` | When the function returns a [`CursorPage`](crate::CursorPage) or [`TwoWayCursorPage`](crate::TwoWayCursorPage), this determines to give the next (`cursor` or `after`) or previous (`before`) page. |
 #![allow(clippy::missing_errors_doc)]
 
 use std::future::Future;
@@ -69,81 +69,81 @@ mod users_profile;
 impl Client {
     /// Album-related endpoints.
     #[must_use]
-    pub const fn albums(&self) -> Albums {
+    pub const fn albums(&self) -> Albums<'_> {
         Albums(self)
     }
 
     /// Artist-related endpoints.
     #[must_use]
-    pub const fn artists(&self) -> Artists {
+    pub const fn artists(&self) -> Artists<'_> {
         Artists(self)
     }
 
     /// Endpoint functions related to categories, featured playlists, recommendations, and new
     /// releases.
     #[must_use]
-    pub const fn browse(&self) -> Browse {
+    pub const fn browse(&self) -> Browse<'_> {
         Browse(self)
     }
 
     /// Episode-related endpoints.
     #[must_use]
-    pub const fn episodes(&self) -> Episodes {
+    pub const fn episodes(&self) -> Episodes<'_> {
         Episodes(self)
     }
 
     /// Endpoint functions related to following and unfollowing artists, users and playlists.
     #[must_use]
-    pub const fn follow(&self) -> Follow {
+    pub const fn follow(&self) -> Follow<'_> {
         Follow(self)
     }
 
     /// Endpoints relating to saving albums and tracks.
     #[must_use]
-    pub const fn library(&self) -> Library {
+    pub const fn library(&self) -> Library<'_> {
         Library(self)
     }
 
     /// Endpoint functions relating to a user's top artists and tracks.
     #[must_use]
-    pub const fn personalization(&self) -> Personalization {
+    pub const fn personalization(&self) -> Personalization<'_> {
         Personalization(self)
     }
 
     /// Endpoint functions related to controlling what is playing on the current user's Spotify
     /// account. (Beta)
     #[must_use]
-    pub const fn player(&self) -> Player {
+    pub const fn player(&self) -> Player<'_> {
         Player(self)
     }
 
     /// Endpoint functions related to playlists.
     #[must_use]
-    pub const fn playlists(&self) -> Playlists {
+    pub const fn playlists(&self) -> Playlists<'_> {
         Playlists(self)
     }
 
     /// Endpoint functions related to searches.
     #[must_use]
-    pub const fn search(&self) -> Search {
+    pub const fn search(&self) -> Search<'_> {
         Search(self)
     }
 
     /// Endpoint functions related to shows.
     #[must_use]
-    pub const fn shows(&self) -> Shows {
+    pub const fn shows(&self) -> Shows<'_> {
         Shows(self)
     }
 
     /// Endpoint functions related to tracks and audio analysis.
     #[must_use]
-    pub const fn tracks(&self) -> Tracks {
+    pub const fn tracks(&self) -> Tracks<'_> {
         Tracks(self)
     }
 
     /// Endpoint functions related to users' profiles.
     #[must_use]
-    pub const fn users_profile(&self) -> UsersProfile {
+    pub const fn users_profile(&self) -> UsersProfile<'_> {
         UsersProfile(self)
     }
 }

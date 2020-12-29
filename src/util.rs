@@ -15,8 +15,8 @@ where
 
     impl<'de> Visitor<'de> for Expires {
         type Value = Instant;
-        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
-            write!(f, "number of seconds until the token expires")
+        fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
+            f.write_str("number of seconds until the token expires")
         }
         fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
             Ok(Instant::now() + Duration::from_secs(v))
@@ -43,8 +43,8 @@ pub(crate) mod serde_duration_secs {
 
         impl<'de> Visitor<'de> for Secs {
             type Value = Duration;
-            fn expecting(&self, f: &mut Formatter) -> fmt::Result {
-                write!(f, "seconds")
+            fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
+                f.write_str("seconds")
             }
             fn visit_f64<E: de::Error>(self, v: f64) -> Result<Self::Value, E> {
                 Ok(Duration::from_secs_f64(v))
@@ -76,8 +76,8 @@ pub(crate) mod serde_duration_millis {
 
         impl<'de> Visitor<'de> for Millis {
             type Value = Duration;
-            fn expecting(&self, f: &mut Formatter) -> fmt::Result {
-                write!(f, "milliseconds")
+            fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
+                f.write_str("milliseconds")
             }
             fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
                 Ok(Duration::from_millis(v))
@@ -137,8 +137,8 @@ pub(crate) mod serde_status_code {
 
         impl<'de> Visitor<'de> for Code {
             type Value = StatusCode;
-            fn expecting(&self, f: &mut Formatter) -> fmt::Result {
-                write!(f, "an HTTP Status code")
+            fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
+                f.write_str("an HTTP Status code")
             }
             fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
                 StatusCode::from_u16(v.try_into().map_err(E::custom)?).map_err(E::custom)
@@ -176,8 +176,8 @@ pub(crate) mod serde_disallows {
 
         impl<'de> Visitor<'de> for DisallowsVisitor {
             type Value = Vec<Disallow>;
-            fn expecting(&self, f: &mut Formatter) -> fmt::Result {
-                write!(f, "a disallows map")
+            fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
+                f.write_str("a disallows map")
             }
             fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
                 let mut v = Vec::with_capacity(10);
@@ -215,8 +215,8 @@ where
 
     impl<'de> Visitor<'de> for UriVisitor {
         type Value = String;
-        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
-            write!(f, concat!("a Spotify URI"))
+        fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
+            f.write_str("a Spotify URI")
         }
         fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
             let mut parts = v.split(':');
@@ -258,8 +258,8 @@ where
 
     impl<'de> Visitor<'de> for DateVisitor {
         type Value = NaiveDate;
-        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
-            write!(f, "a date")
+        fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
+            f.write_str("a date")
         }
         fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
             let mut parts = v.splitn(3, '-');

@@ -47,7 +47,7 @@ inherit_album_simplified!(
         /// album of a local track, which can only ever be obtained from a playlist.
         album_type: Option<AlbumType>,
         /// The [Spotify ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
-        /// for this album. This can only be `None` for the album of a local track, which can only
+        /// for this album. This can only be [`None`] for the album of a local track, which can only
         /// ever be obtained from a playlist.
         id: Option<String>,
         /// When the album was released. This can only be `None` for the album of a local track,
@@ -55,7 +55,7 @@ inherit_album_simplified!(
         #[serde(deserialize_with = "util::de_date_any_precision_option")]
         release_date: Option<NaiveDate>,
         /// How precise the release date is: precise to the year, month or day. This can only be
-        /// `None` for the album of a local track,which can only ever be obtained from a playlist.
+        /// [`None`] for the album of a local track,which can only ever be obtained from a playlist.
         release_date_precision: Option<DatePrecision>,
     }
 );
