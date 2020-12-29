@@ -45,9 +45,9 @@ impl Shows<'_> {
     /// precendence.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/shows/get-several-shows/).
-    pub async fn get_shows<I: Iterator>(
+    pub async fn get_shows<I: IntoIterator>(
         self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        ids: I,
         market: Option<CountryCode>,
     ) -> Result<Response<Vec<ShowSimplified>>, Error>
     where

@@ -40,9 +40,9 @@ impl Episodes<'_> {
     /// Reading the user's playback points requires `user-read-playback-position`.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/episodes/get-several-episodes/).
-    pub async fn get_episodes<I: Iterator>(
+    pub async fn get_episodes<I: IntoIterator>(
         self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
+        ids: I,
         market: Option<CountryCode>,
     ) -> Result<Response<Vec<Option<Episode>>>, Error>
     where

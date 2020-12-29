@@ -25,10 +25,7 @@ impl Artists<'_> {
     /// Get information about several artists.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/artists/get-several-artists/).
-    pub async fn get_artists<I: Iterator>(
-        self,
-        ids: impl IntoIterator<IntoIter = I, Item = I::Item>,
-    ) -> Result<Response<Vec<Artist>>, Error>
+    pub async fn get_artists<I: IntoIterator>(self, ids: I) -> Result<Response<Vec<Artist>>, Error>
     where
         I::Item: Display,
     {

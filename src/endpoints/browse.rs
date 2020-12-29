@@ -181,11 +181,11 @@ impl Browse<'_> {
     /// the reference for more info on this.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/browse/get-recommendations/).
-    pub async fn get_recommendations<AI: Iterator, GI: Iterator, TI: Iterator>(
+    pub async fn get_recommendations<AI: IntoIterator, GI: IntoIterator, TI: IntoIterator>(
         self,
-        seed_artists: impl IntoIterator<IntoIter = AI, Item = AI::Item>,
-        seed_genres: impl IntoIterator<IntoIter = GI, Item = GI::Item>,
-        seed_tracks: impl IntoIterator<IntoIter = TI, Item = TI::Item>,
+        seed_artists: AI,
+        seed_genres: GI,
+        seed_tracks: TI,
         attributes: &impl Serialize,
         limit: usize,
         market: Option<Market>,
