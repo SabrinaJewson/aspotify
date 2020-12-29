@@ -32,7 +32,7 @@ macro_rules! inherit_show_simplified {
             id: String,
             /// The cover art for the show in various sizes, widest first.
             images: Vec<Image>,
-            /// Whether the episode is hosted outside of Spotify's CDN. Can be None.
+            /// Whether the episode is hosted outside of Spotify's CDN. Can be [`None`].
             is_externally_hosted: Option<bool>,
             /// The list of languages used in the show. These are ISO 639 codes.
             // TODO: it can be en-US/en-GB
@@ -136,7 +136,7 @@ macro_rules! inherit_episode_simplified {
             release_date: NaiveDate,
             /// How precise the release date is: precise to the year, month or day.
             release_date_precision: DatePrecision,
-            /// The user's most recent position in the episode. None if there is no user.
+            /// The user's most recent position in the episode. [`None`] if there is no user.
             resume_point: Option<ResumePoint>,
             /// The item type; `episode`.
             #[serde(rename = "type")]
@@ -159,7 +159,7 @@ inherit_episode_simplified!(
 );
 
 impl Episode {
-    /// Convert to an `EpisodeSimplified`.
+    /// Convert to an [`EpisodeSimplified`].
     #[must_use]
     pub fn simplify(self) -> EpisodeSimplified {
         EpisodeSimplified {

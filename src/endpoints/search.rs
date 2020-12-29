@@ -14,10 +14,10 @@ impl Search<'_> {
     /// applied individually to each type specified in `types`, not the whole response. `offset` has a
     /// maximum of 10,000.
     ///
-    /// See
-    /// [here](https://developer.spotify.com/documentation/web-api/reference/search/search/#writing-a-query---guidelines)
-    /// on how to write a query. The only difference is that you shouldn't encode spaces as `%20` or
-    /// `+`, as that is done by this function automatically.
+    /// Read [the Spotify documentation on how to write a
+    /// query](https://developer.spotify.com/documentation/web-api/reference/search/search/#writing-a-query---guidelines)
+    /// to create the `query` parameter.  The only difference is that you shouldn't encode spaces as
+    /// `%20` or `+`, as that is done by this function automatically.
     ///
     /// # Limitations
     ///

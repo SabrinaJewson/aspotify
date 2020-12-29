@@ -15,8 +15,8 @@ macro_rules! inherit_track_simplified {
             )*
             /// The artists who performed the track.
             artists: Vec<ArtistSimplified>,
-            /// The markets in which this track is available. Only Some if the market parameter is
-            /// not supplied in the request. This is an ISO-3166 2-letter country code.
+            /// The markets in which this track is available. Only [`Some`] if the market parameter
+            /// is not supplied in the request. This is an ISO-3166 2-letter country code.
             available_markets: Option<Vec<String>>,
             /// The disc number (1 unless the album contains more than one disc).
             disc_number: usize,

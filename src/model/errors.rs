@@ -16,7 +16,7 @@ pub struct AuthError {
 }
 
 impl Display for AuthError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}: {}", self.error, self.error_description)
     }
 }
@@ -69,7 +69,7 @@ impl From<EndpointError> for EndpointErrorWrapper {
 }
 
 impl Display for EndpointError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if let Some(reason) = self.reason {
             write!(f, "{}: {}", self.message, reason)
         } else {
@@ -96,13 +96,13 @@ pub enum Error {
 }
 
 impl Display for Error {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Http(e) => write!(f, "{}", e),
-            Self::Parse(e) => write!(f, "{}", e),
-            Self::Auth(e) => write!(f, "{}", e),
-            Self::Endpoint(e) => write!(f, "{}", e),
-            Self::Io(e) => write!(f, "{}", e),
+            Self::Http(e) => e.fmt(f),
+            Self::Parse(e) => e.fmt(f),
+            Self::Auth(e) => e.fmt(f),
+            Self::Endpoint(e) => e.fmt(f),
+            Self::Io(e) => e.fmt(f),
         }
     }
 }
@@ -190,7 +190,7 @@ pub enum PlayerErrorReason {
 }
 
 impl Display for PlayerErrorReason {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
             Self::NoPrevTrack => "There is no previous track",
             Self::NoNextTrack => "There is no next track",

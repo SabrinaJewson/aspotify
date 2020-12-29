@@ -2,7 +2,7 @@
 //! API](https://developer.spotify.com/documentation/web-api/).
 //!
 //! # Examples
-//! ```no_run
+//! ```
 //! # async {
 //! use aspotify::{Client, ClientCredentials};
 //!
@@ -22,6 +22,8 @@
 //! # Notes
 //! - Spotify often imposes limits on endpoints, for example you can't get more than 50 tracks at
 //! once. This crate removes this limit by making multiple requests when necessary.
+#![forbid(unsafe_code)]
+#![deny(rust_2018_idioms)]
 #![warn(missing_docs, clippy::pedantic)]
 #![allow(
     clippy::module_name_repetitions,
@@ -46,9 +48,9 @@ use tokio_compat_02::FutureExt;
 
 pub use authorization_url::*;
 pub use endpoints::*;
-/// Re-export from [isocountry](https://crates.io/crates/isocountry).
+/// Re-export from [`isocountry`].
 pub use isocountry::CountryCode;
-/// Re-export from [isolanguage-1](https://crates.io/crates/isolanguage-1).
+/// Re-export from [`isolanguage_1`].
 pub use isolanguage_1::LanguageCode;
 pub use model::*;
 
@@ -61,8 +63,8 @@ mod util;
 ///
 /// By default it will use the [client credentials
 /// flow](https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow)
-/// to send requests to the Spotify API. The `set_refresh_token` and `redirected` methods tell it
-/// to use the [authorization code
+/// to send requests to the Spotify API. The [`set_refresh_token`](Client::set_refresh_token) and
+/// [`redirected`](Client::redirected) methods tell it to use the [authorization code
 /// flow](https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow)
 /// instead.
 #[derive(Debug)]
@@ -152,8 +154,8 @@ impl Client {
     /// Set the refresh token from the URL the client was redirected to and the state that was used
     /// to send them there.
     ///
-    /// Use the `authorization_url` function to generate the URL to which you can send the client
-    /// to to generate the URL here.
+    /// Use the [`authorization_url()`] function to generate the URL to which you can send the
+    /// client to to generate the URL here.
     ///
     /// # Errors
     ///
@@ -347,6 +349,7 @@ impl<T> Response<T> {
 /// these.
 ///
 /// # Examples
+///
 /// ```no_run
 /// use aspotify::ClientCredentials;
 ///
@@ -400,7 +403,7 @@ impl ClientCredentials {
     }
 }
 
-/// An error caused by the `client::redirected` function.
+/// An error caused by the [`Client::redirected`] function.
 #[derive(Debug)]
 pub enum RedirectedError {
     /// The URL is malformed.
@@ -427,11 +430,11 @@ impl From<Error> for RedirectedError {
 }
 
 impl Display for RedirectedError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidUrl(e) => write!(f, "malformed redirect URL: {}", e),
+            Self::InvalidUrl(_) => f.write_str("malformed redirect URL"),
             Self::IncorrectState => f.write_str("state parameter not found or is incorrect"),
-            Self::AuthFailed(e) => write!(f, "authorization failed: {}", e),
+            Self::AuthFailed(_) => f.write_str("authorization failed"),
             Self::Token(e) => e.fmt(f),
         }
     }
@@ -483,6 +486,7 @@ impl AccessToken {
     }
 }
 
+/// Get the contents of a request body as a string. This is only used for debugging purposes.
 fn body_str(req: &reqwest::Request) -> Option<&str> {
     req.body().map(|body| {
         body.as_bytes().map_or("stream", |bytes| {

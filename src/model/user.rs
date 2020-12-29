@@ -27,8 +27,8 @@ macro_rules! inherit_user_simplified {
 }
 
 inherit_user_simplified!(
-    /// A user object that contains less fields than UserPublic and is not documented anywhere, but
-    /// is returned by some endpoints.
+    /// A user object that contains less fields than [`UserPublic`] and is not documented anywhere,
+    /// but is returned by some endpoints.
     UserSimplified {}
 );
 
@@ -67,7 +67,7 @@ inherit_user_public!(
 );
 
 impl UserPublic {
-    /// Convert to a `UserSimplified`.
+    /// Convert to a [`UserSimplified`].
     #[must_use]
     pub fn simplify(self) -> UserSimplified {
         UserSimplified {
@@ -84,7 +84,7 @@ impl From<UserPublic> for UserSimplified {
     }
 }
 impl UserPrivate {
-    /// Convert to a `UserPublic`.
+    /// Convert to a [`UserPublic`].
     #[must_use]
     pub fn publicize(self) -> UserPublic {
         UserPublic {
@@ -96,7 +96,7 @@ impl UserPrivate {
             item_type: TypeUser,
         }
     }
-    /// Convert to a `UserSimplified`.
+    /// Convert to a [`UserSimplified`].
     #[must_use]
     pub fn simplify(self) -> UserSimplified {
         self.publicize().simplify()

@@ -12,7 +12,7 @@ use crate::util;
 /// A device object.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Device {
-    /// The device id. It can be None, and I don't know why.
+    /// The device id. It can be [`None`], and I don't know why.
     pub id: Option<String>,
     /// Whether this device is the currently active device.
     pub is_active: bool,
@@ -26,7 +26,7 @@ pub struct Device {
     /// The type of the device.
     #[serde(rename = "type")]
     pub device_type: DeviceType,
-    /// The current volume in percent. It can be None, and I don't know why.
+    /// The current volume in percent. It can be [`None`], and I don't know why.
     pub volume_percent: Option<u32>,
 }
 
@@ -52,20 +52,20 @@ pub enum DeviceType {
 /// Information about the currently playing track.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CurrentlyPlaying {
-    /// The context of the currently playing track. Is None for example if a private session is
+    /// The context of the currently playing track. Is [`None`] for example if a private session is
     /// enabled.
     pub context: Option<Context>,
     // Spotify gave me negative timestamps for some reason so I had to disable this.
     // /// When data was fetched.
     // #[serde(with = "ts_milliseconds")]
     // pub timestamp: DateTime<Utc>,
-    /// Progress into the currently playing track. Is None for example if a private session is
+    /// Progress into the currently playing track. Is [`None`] for example if a private session is
     /// enabled.
     #[serde(rename = "progress_ms", with = "util::serde_duration_millis_option")]
     pub progress: Option<Duration>,
     /// If something is currently playing.
     pub is_playing: bool,
-    /// The currently playing item. Is None for example if a private session is enabled.
+    /// The currently playing item. Is [`None`] for example if a private session is enabled.
     #[serde(flatten)]
     pub item: Option<PlayingType>,
     /// Which actions are disallowed in the current context.
@@ -185,9 +185,17 @@ pub enum RepeatState {
 }
 
 impl RepeatState {
-    /// Get the state of repeating as a string.
+    /// Get the state of repeating as a lowercase string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let state = aspotify::RepeatState::Track;
+    ///
+    /// assert_eq!(state.as_str(), "track");
+    /// ```
     #[must_use]
-    pub fn as_str(self) -> &'static str {
+    pub const fn as_str(self) -> &'static str {
         match self {
             Self::Off => "off",
             Self::Track => "track",

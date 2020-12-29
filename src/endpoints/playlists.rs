@@ -313,7 +313,7 @@ impl Playlists<'_> {
     ///
     /// This function removes all the items from the given playlist, and replaces them with the
     /// given items. The maximum number of tracks is 100, if you need more you can use
-    /// `add_to_playlist`.
+    /// [`add_to_playlist`](Self::add_to_playlist).
     ///
     /// This function returns the `snapshot_id` of the created playlist, which you should hold on to to
     /// stop concurrent accesses to the playlist interfering with each other.
@@ -342,8 +342,8 @@ impl Playlists<'_> {
     /// `playlist-modify-private` if it is private, and also requires `ugc-image-upload`.
     ///
     /// `image` must be a base64-encoded JPEG image under 256KB. If you want to pass in JPEG data,
-    /// see `upload_playlist_cover_jpeg`; if you want to pass in a filename, see
-    /// `upload_playlist_cover_file`.
+    /// see [`upload_playlist_cover_jpeg`](Self::upload_playlist_cover_jpeg); if you want to pass in
+    /// a filename, see [`upload_playlist_cover_file`](Self::upload_playlist_cover_file).
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/playlists/upload-custom-playlist-cover/).
     pub async fn upload_playlist_cover(self, id: &str, image: String) -> Result<(), Error> {
@@ -364,7 +364,7 @@ impl Playlists<'_> {
     /// `playlist-modify-private` if it is private, and also requires `ugc-image-upload`.
     ///
     /// `image` must be JPEG data. If you want to pass in a filename, see
-    /// `upload_playlist_cover_file`.
+    /// [`upload_playlist_cover_file`](Self::upload_playlist_cover_file).
     ///
     /// This function is only available when the `base64` feature of this library is enabled.
     ///

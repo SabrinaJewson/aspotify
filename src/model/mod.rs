@@ -59,7 +59,7 @@ pub mod consts {
                         struct ValueVisitor;
                         impl<'de> Visitor<'de> for ValueVisitor {
                             type Value = $name;
-                            fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+                            fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
                                 f.write_str(concat!("the string ", $svalue))
                             }
                             fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
@@ -136,7 +136,7 @@ mod serde_is_p {
 
         impl<'de> Visitor<'de> for CopyrightType {
             type Value = bool;
-            fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+            fn expecting(&self, f: &mut Formatter<'_>) -> fmt::Result {
                 f.write_str("P or C")
             }
             fn visit_str<E: de::Error>(self, s: &str) -> Result<Self::Value, E> {
@@ -219,7 +219,7 @@ pub struct TwoWayCursorPage<T> {
     pub cursors: TwoWayCursor,
 }
 
-/// Object that contains the next and previous `CursorPage`.
+/// Object that contains the next and previous [`CursorPage`].
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TwoWayCursor {
     /// The cursor page after this one.
@@ -249,7 +249,8 @@ pub struct RecommendationSeed {
     pub id: String,
     /// The number of recommended tracks available for this seed.
     pub initial_pool_size: usize,
-    /// The entity type of this seed; Artist, Track or Genre.
+    /// The entity type of this seed; [Artist](SeedType::Artist), [Track](SeedType::Track) or
+    /// [Genre](SeedType::Genre).
     #[serde(rename = "type")]
     pub entity_type: SeedType,
 }
@@ -297,9 +298,13 @@ pub enum ItemType {
 }
 
 impl ItemType {
-    /// The type of item as a string.
+    /// The type of item as a lowercase string.
+    ///
+    /// ```
+    /// assert_eq!(aspotify::ItemType::Episode.as_str(), "episode");
+    /// ```
     #[must_use]
-    pub fn as_str(self) -> &'static str {
+    pub const fn as_str(self) -> &'static str {
         match self {
             Self::Album => "album",
             Self::Artist => "artist",

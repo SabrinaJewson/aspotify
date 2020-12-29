@@ -223,7 +223,7 @@ impl Player<'_> {
     ///
     /// After a successful skip operation, playback will automatically start. This action will always
     /// skip to the previous track, regardless of the current track's progress; to go to the start of
-    /// the track, use `seek`.
+    /// the track, use [`seek`](Self::seek).
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/player/skip-users-playback-to-previous-track/).
     pub async fn skip_prev(self, device_id: Option<&str>) -> Result<(), Error> {
@@ -245,7 +245,8 @@ impl Player<'_> {
     ///
     /// `play`, when set, controls what to play, and what offset in the context to start playing at.
     /// `position` controls how far into the current track to play; if it is longer than the current
-    /// track, then the next track will play. To keep the existing content and position, use `resume`.
+    /// track, then the next track will play. To keep the existing content and position, use
+    /// [`resume`](Self::resume).
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/player/start-a-users-playback/).
     pub async fn play<I: IntoIterator>(
@@ -309,7 +310,8 @@ impl Player<'_> {
     /// Requires `user-modify-playback-state`. This action complete asynchronously, meaning you will
     /// not know if it succeeded unless you check.
     ///
-    /// Resumes playback where it was paused. To specify a content or offset, use `play` instead.
+    /// Resumes playback where it was paused. To specify a content or offset, use
+    /// [`play`](Self::play) instead.
     ///
     /// [Reference](https://developer.spotify.com/documentation/web-api/reference/player/start-a-users-playback/).
     pub async fn resume(self, device_id: Option<&str>) -> Result<(), Error> {

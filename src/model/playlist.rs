@@ -26,8 +26,8 @@ macro_rules! inherit_playlist_simplified {
             images: Vec<Image>,
             /// The name of the playlist.
             name: String,
-            /// The user who owns the playlist. This is a UserPublic according to the
-            /// documentation, but in practice it is not.
+            /// The user who owns the playlist. This is a [`UserPublic`](crate::UserPublic)
+            /// according to the documentation, but in practice it is not.
             owner: UserSimplified,
             /// Whether the playlist is public; None if not relevant.
             public: Option<bool>,
@@ -88,10 +88,10 @@ impl From<Playlist> for PlaylistSimplified {
 /// Information about an item inside a playlist.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlaylistItem {
-    /// The date and time that the item was added. Some very old playlists might have None.
+    /// The date and time that the item was added. Some very old playlists might have [`None`].
     pub added_at: Option<DateTime<Utc>>,
-    /// The Spotify user who added the item. Some very old playlists might have None. This is a
-    /// UserPublic according to the documentation, but in practice it is not.
+    /// The Spotify user who added the item. Some very old playlists might have [`None`]. This is a
+    /// [`UserPublic`](crate::UserPublic) according to the documentation, but in practice it is not.
     pub added_by: Option<UserSimplified>,
     /// Whether the item is a local file or not.
     pub is_local: bool,
@@ -111,7 +111,7 @@ pub enum PlaylistItemType<T, E> {
 }
 
 impl<T: Display, E: Display> PlaylistItemType<T, E> {
-    /// Formats a Spotify URI using the `Display` implementations of the track and episode types.
+    /// Formats a Spotify URI using the [`Display`] implementations of the track and episode types.
     pub fn uri(&self) -> String {
         match self {
             Self::Track(track) => format!("spotify:track:{}", track),
