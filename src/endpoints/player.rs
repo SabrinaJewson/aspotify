@@ -597,6 +597,20 @@ mod tests {
             .data
             .unwrap();
         assert!(!playback.currently_playing.is_playing);
+
+        // Resume
+        player.resume(None).await.unwrap();
+        time::sleep(wait_time).await;
+        let playback = player
+            .get_playback(Some(Market::FromToken))
+            .await
+            .unwrap()
+            .data
+            .unwrap();
+        assert!(playback.currently_playing.is_playing);
+
+        // Pause again
+        player.pause(None).await.unwrap();
     }
 
     #[tokio::test]
