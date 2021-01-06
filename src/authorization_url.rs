@@ -124,7 +124,7 @@ pub fn authorization_url(
     let mut rng = rand::thread_rng();
     let mut state = String::with_capacity(STATE_LEN);
     for _ in 0..STATE_LEN {
-        state.push(STATE_CHARS[rng.gen_range(0, STATE_CHARS.len())].into());
+        state.push(STATE_CHARS[rng.gen_range(0..STATE_CHARS.len())].into());
     }
 
     (

@@ -44,7 +44,6 @@ use reqwest::{header, RequestBuilder, Url};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, MutexGuard};
-use tokio_compat_02::FutureExt;
 
 pub use authorization_url::*;
 pub use endpoints::*;
@@ -130,7 +129,7 @@ impl Client {
             dbg!(&request, body_str(&request));
         }
 
-        let response = self.client.execute(request).compat().await?;
+        let response = self.client.execute(request).await?;
         let status = response.status();
         let text = response.text().await?;
         if !status.is_success() {
@@ -223,11 +222,7 @@ impl Client {
         }
 
         let response = loop {
-            let response = self
-                .client
-                .execute(request.try_clone().unwrap())
-                .compat()
-                .await?;
+            let response = self.client.execute(request.try_clone().unwrap()).await?;
             if response.status() != 429 {
                 break response;
             }
