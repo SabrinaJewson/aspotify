@@ -11,34 +11,32 @@ authors = ["KaiJewson <kai.jewson@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-reqwest = { version = "0.10.9", features = ["json"] }
-# Reqwest hasn't updated to Tokio 0.3 yet
-tokio-compat-02  = "0.1.2"
+reqwest = { version = "0.11.0", features = ["json"] }
 # reqwest doesn't re-export url::{ParseError, Position}
 url = "2.2.0"
 # For the mutex around AccessToken and the Retry-After delay
-tokio = { version = "0.3.0", features = ["sync", "time"] }
+tokio = { version = "1.0.1", features = ["sync", "time"] }
 # Serde
 serde = { version = "1.0.118", features = ["derive"] }
 serde_millis = "0.1.1"
 serde_json = "1.0.60"
 # Datatypes used in the Spotify schema
 chrono = { version = "0.4.19", features = ["serde"] }
-isocountry = "0.2.0"
+isocountry = "0.3.2"
 isolanguage-1 = { version = "0.2.0", features = ["serde"] }
 # For joining iterators of T: Display with "," and chunking ids into groups
-itertools = "0.9.0"
+itertools = "0.10.0"
 # For managing streams
 futures-util = "0.3.8"
 
 # For generating random state
-rand = { version = "0.7.3", optional = true }
+rand = { version = "0.8.1", optional = true }
 # For encoding playlist cover images
 base64 = { version = "0.13.0", optional = true }
 
 [dev-dependencies]
 dotenv = "0.15.0"
-tokio = { version = "0.3.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.0.1", features = ["macros", "rt-multi-thread"] }
 
 [features]
 default = ["base64", "rand"]
