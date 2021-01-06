@@ -496,8 +496,8 @@ mod tests {
         assert_eq!(tracks.total, 2);
         assert_eq!(tracks.items.len(), 1);
         let track = match tracks.items.into_iter().next().unwrap().item {
-            PlaylistItemType::Track(track) => track,
-            PlaylistItemType::Episode(_) => panic!(),
+            Some(PlaylistItemType::Track(track)) => track,
+            _ => panic!(),
         };
         assert_eq!(track.is_local, false);
         assert_eq!(track.id.unwrap(), "6GG73Jik4jUlQCkKg9JuGO");
@@ -525,7 +525,7 @@ mod tests {
                 tracks
                     .items
                     .iter()
-                    .map(|item| match &item.item {
+                    .map(|item| match item.item.as_ref().unwrap() {
                         PlaylistItemType::Track(track) =>
                             PlaylistItemType::Track(track.id.as_deref().unwrap()),
                         PlaylistItemType::Episode(episode) =>
@@ -624,6 +624,15 @@ mod tests {
         client()
             .playlists()
             .get_users_playlists("wizzler", 2, 1)
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_get_playlist_with_episodes() {
+        client()
+            .playlists()
+            .get_playlist("37i9dQZF1DXacZOGa5EAdH", None)
             .await
             .unwrap();
     }

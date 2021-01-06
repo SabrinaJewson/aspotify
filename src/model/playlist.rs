@@ -95,9 +95,9 @@ pub struct PlaylistItem {
     pub added_by: Option<UserSimplified>,
     /// Whether the item is a local file or not.
     pub is_local: bool,
-    /// The item itself.
+    /// The item itself. Spotify API sometimes returns null for this, and I don't know why.
     #[serde(rename = "track")]
-    pub item: PlaylistItemType<Track, Episode>,
+    pub item: Option<PlaylistItemType<Track, Episode>>,
 }
 
 /// The types of item that can go in a playlist.
