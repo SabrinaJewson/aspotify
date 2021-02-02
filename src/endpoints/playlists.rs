@@ -1,6 +1,4 @@
 use std::fmt::Display;
-#[cfg(feature = "base64")]
-use std::{fs, path::Path};
 
 use reqwest::header;
 
@@ -363,8 +361,7 @@ impl Playlists<'_> {
     /// Requires `playlist-modify-public` if the playlist is public, requires
     /// `playlist-modify-private` if it is private, and also requires `ugc-image-upload`.
     ///
-    /// `image` must be JPEG data. If you want to pass in a filename, see
-    /// [`upload_playlist_cover_file`](Self::upload_playlist_cover_file).
+    /// `image` must be JPEG data.
     ///
     /// This function is only available when the `base64` feature of this library is enabled.
     ///
@@ -376,25 +373,6 @@ impl Playlists<'_> {
         image: &T,
     ) -> Result<(), Error> {
         self.upload_playlist_cover(id, base64::encode(image)).await
-    }
-
-    /// Upload a custom playlist cover image.
-    ///
-    /// Requires `playlist-modify-public` if the playlist is public, requires
-    /// `playlist-modify-private` if it is private, and also requires `ugc-image-upload`.
-    ///
-    /// `image` must be a JPEG filename.
-    ///
-    /// This function is only available when the `base64` feature of this library is enabled.
-    ///
-    /// [Reference](https://developer.spotify.com/documentation/web-api/reference/playlists/upload-custom-playlist-cover/).
-    #[cfg(feature = "base64")]
-    pub async fn upload_playlist_cover_file<P: AsRef<Path>>(
-        self,
-        id: &str,
-        image: P,
-    ) -> Result<(), Error> {
-        self.upload_playlist_cover_jpeg(id, &fs::read(image)?).await
     }
 }
 
@@ -593,7 +571,10 @@ mod tests {
         #[cfg(feature = "base64")]
         {
             playlists
-                .upload_playlist_cover_file(&playlist.id, "example_image.jpeg")
+                .upload_playlist_cover_jpeg(
+                    &playlist.id,
+                    &std::fs::read("example_image.jpeg").unwrap(),
+                )
                 .await
                 .unwrap();
             time::sleep(Duration::from_secs(5)).await;
