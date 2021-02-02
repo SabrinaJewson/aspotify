@@ -1,5 +1,5 @@
+use std::error;
 use std::fmt::{self, Display, Formatter};
-use std::{error, io};
 
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -80,8 +80,9 @@ impl Display for EndpointError {
 
 impl error::Error for EndpointError {}
 
-/// An error from a Spotify endpoint.
+/// An error sending a request to a Spotify endpoint.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// An error caused when sending the HTTP request.
     Http(reqwest::Error),
@@ -91,8 +92,6 @@ pub enum Error {
     Auth(AuthError),
     /// An error caused by a Spotify endpoint.
     Endpoint(EndpointError),
-    /// Any other IO error.
-    Io(io::Error),
 }
 
 impl Display for Error {
@@ -102,7 +101,6 @@ impl Display for Error {
             Self::Parse(e) => e.fmt(f),
             Self::Auth(e) => e.fmt(f),
             Self::Endpoint(e) => e.fmt(f),
-            Self::Io(e) => e.fmt(f),
         }
     }
 }
@@ -114,7 +112,6 @@ impl error::Error for Error {
             Self::Parse(e) => e,
             Self::Auth(e) => e,
             Self::Endpoint(e) => e,
-            Self::Io(e) => e,
         })
     }
 }
@@ -137,12 +134,6 @@ impl From<AuthError> for Error {
 impl From<EndpointError> for Error {
     fn from(error: EndpointError) -> Self {
         Self::Endpoint(error)
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(error: io::Error) -> Self {
-        Self::Io(error)
     }
 }
 
