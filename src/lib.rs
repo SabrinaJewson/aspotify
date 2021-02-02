@@ -58,6 +58,53 @@ pub mod endpoints;
 pub mod model;
 mod util;
 
+pub struct ClientBuilder {
+    client: Option<reqwest::Client>,
+    credentials: Option<ClientCredentials>,
+    access_token: Option<AccessToken>,
+    debug: bool,
+}
+
+impl ClientBuilder {
+    pub fn new() -> Self {
+        Self {
+            credentials: None,
+            access_token: None,
+            client: None,
+            debug: false,
+        }
+    }
+
+    pub fn client(mut self, client: reqwest::Client) -> Self {
+        self.client.replace(client);
+        self
+    }
+
+    pub fn credentials(mut self, credentials: ClientCredentials) -> Self {
+        self.credentials.replace(credentials);
+        self
+    }
+
+    pub fn access_token(mut self, access_token: AccessToken) -> Self {
+        self.access_token.replace(access_token);
+        self
+    }
+
+    pub fn debug(mut self) -> Self {
+        self.debug = true;
+        self
+    }
+
+    pub fn build(self) -> Client {
+        Client {
+            client: self.client.unwrap_or_default(),
+            credentials: self.credentials.unwrap_or_else(ClientCredentials::empty),
+            cache: Mutex::new(self.access_token.unwrap_or_else(AccessToken::empty)),
+            debug: self.debug,
+        }
+    }
+}
+
 /// A client to the Spotify API.
 ///
 /// By default it will use the [client credentials
@@ -79,22 +126,15 @@ impl Client {
     /// Create a new client from your Spotify client credentials.
     #[must_use]
     pub fn new(credentials: ClientCredentials) -> Self {
-        Self {
-            credentials,
-            client: reqwest::Client::new(),
-            cache: Mutex::new(AccessToken::new(None)),
-            debug: false,
-        }
+        ClientBuilder::new().credentials(credentials).build()
     }
     /// Create a new client with your Spotify client credentials and a refresh token.
     #[must_use]
     pub fn with_refresh(credentials: ClientCredentials, refresh_token: String) -> Self {
-        Self {
-            credentials,
-            client: reqwest::Client::new(),
-            cache: Mutex::new(AccessToken::new(Some(refresh_token))),
-            debug: false,
-        }
+        ClientBuilder::new()
+            .credentials(credentials)
+            .access_token(AccessToken::from_refresh(Some(refresh_token)))
+            .build()
     }
     /// Get the client's refresh token.
     pub async fn refresh_token(&self) -> Option<String> {
@@ -396,6 +436,13 @@ impl ClientCredentials {
     pub fn from_env() -> Result<Self, VarError> {
         Self::from_env_vars("CLIENT_ID", "CLIENT_SECRET")
     }
+
+    pub fn empty() -> Self {
+        Self {
+            id: String::new(),
+            secret: String::new(),
+        }
+    }
 }
 
 /// An error caused by the [`Client::redirected`] function.
@@ -459,7 +506,7 @@ enum TokenRequest<'a> {
 }
 
 #[derive(Debug, Deserialize)]
-struct AccessToken {
+pub struct AccessToken {
     #[serde(rename = "access_token")]
     token: String,
     #[serde(
@@ -472,12 +519,24 @@ struct AccessToken {
 }
 
 impl AccessToken {
-    fn new(refresh_token: Option<String>) -> Self {
+    pub fn from_token(token: String, expires: Instant) -> Self {
+        Self {
+            token,
+            expires,
+            refresh_token: None,
+        }
+    }
+
+    pub fn from_refresh(refresh_token: Option<String>) -> Self {
         Self {
             token: String::new(),
             expires: Instant::now() - Duration::from_secs(1),
             refresh_token,
         }
+    }
+
+    pub fn empty() -> Self {
+        Self::from_refresh(None)
     }
 }
 
