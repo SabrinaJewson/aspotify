@@ -28,6 +28,8 @@ isolanguage-1 = { version = "0.2.0", features = ["serde"] }
 itertools = "0.10.0"
 # For managing streams
 futures-util = "0.3.8"
+# Until https://github.com/rust-lang/rfcs/issues/2739 is implemented
+async-trait = "0.1"
 
 # For generating random state
 rand = { version = "0.8.1", optional = true }
