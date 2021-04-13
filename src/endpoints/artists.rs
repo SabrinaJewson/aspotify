@@ -32,7 +32,7 @@ impl Artists<'_> {
         #[derive(Deserialize)]
         struct Artists {
             artists: Vec<Artist>,
-        };
+        }
 
         chunked_sequence(ids, 50, |mut ids| {
             let req = self
@@ -103,7 +103,7 @@ impl Artists<'_> {
         #[derive(Deserialize)]
         struct Tracks {
             tracks: Vec<Track>,
-        };
+        }
 
         Ok(self
             .0
@@ -126,7 +126,7 @@ impl Artists<'_> {
         #[derive(Deserialize)]
         struct Artists {
             artists: Vec<Artist>,
-        };
+        }
 
         Ok(self
             .0

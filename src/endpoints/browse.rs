@@ -59,7 +59,7 @@ impl Browse<'_> {
         #[derive(Deserialize)]
         struct CategoryPage {
             categories: Page<Category>,
-        };
+        }
 
         Ok(self
             .0
@@ -90,7 +90,7 @@ impl Browse<'_> {
         #[derive(Deserialize)]
         struct Playlists {
             playlists: Page<PlaylistSimplified>,
-        };
+        }
 
         Ok(self
             .0
@@ -153,7 +153,7 @@ impl Browse<'_> {
         #[derive(Deserialize)]
         struct NewReleases {
             albums: Page<AlbumSimplified>,
-        };
+        }
 
         Ok(self
             .0
