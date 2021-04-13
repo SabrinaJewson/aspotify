@@ -75,7 +75,7 @@ impl Tracks<'_> {
         #[derive(Deserialize)]
         struct Tracks {
             tracks: Vec<Track>,
-        };
+        }
 
         chunked_sequence(ids, 50, |mut ids| {
             let req = self

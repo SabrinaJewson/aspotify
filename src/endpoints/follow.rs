@@ -176,7 +176,7 @@ impl Follow<'_> {
         #[derive(Deserialize)]
         struct Response {
             artists: CursorPage<Artist>,
-        };
+        }
 
         Ok(self
             .0
