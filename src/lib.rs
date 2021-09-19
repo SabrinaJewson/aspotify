@@ -38,6 +38,7 @@ use std::env::{self, VarError};
 use std::error::Error as StdError;
 use std::ffi::OsStr;
 use std::fmt::{self, Display, Formatter};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use reqwest::{header, RequestBuilder, Url};
@@ -66,12 +67,12 @@ mod util;
 /// [`redirected`](Client::redirected) methods tell it to use the [authorization code
 /// flow](https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow)
 /// instead.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Client {
     /// Your Spotify client credentials.
     pub credentials: ClientCredentials,
     client: reqwest::Client,
-    cache: Mutex<AccessToken>,
+    cache: Arc<Mutex<AccessToken>>,
     debug: bool,
 }
 
@@ -82,7 +83,7 @@ impl Client {
         Self {
             credentials,
             client: reqwest::Client::new(),
-            cache: Mutex::new(AccessToken::new(None)),
+            cache: Arc::new(Mutex::new(AccessToken::new(None))),
             debug: false,
         }
     }
@@ -92,7 +93,7 @@ impl Client {
         Self {
             credentials,
             client: reqwest::Client::new(),
-            cache: Mutex::new(AccessToken::new(Some(refresh_token))),
+            cache: Arc::new(Mutex::new(AccessToken::new(Some(refresh_token)))),
             debug: false,
         }
     }
