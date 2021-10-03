@@ -67,11 +67,11 @@ mod util;
 /// [`redirected`](Client::redirected) methods tell it to use the [authorization code
 /// flow](https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow)
 /// instead.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Client {
     /// Your Spotify client credentials.
     pub credentials: ClientCredentials,
-    client: reqwest::Client,
+    client: Arc<reqwest::Client>,
     cache: Arc<Mutex<AccessToken>>,
     debug: bool,
 }
@@ -82,7 +82,7 @@ impl Client {
     pub fn new(credentials: ClientCredentials) -> Self {
         Self {
             credentials,
-            client: reqwest::Client::new(),
+            client: Arc::new(reqwest::Client::new()),
             cache: Arc::new(Mutex::new(AccessToken::new(None))),
             debug: false,
         }
@@ -92,7 +92,7 @@ impl Client {
     pub fn with_refresh(credentials: ClientCredentials, refresh_token: String) -> Self {
         Self {
             credentials,
-            client: reqwest::Client::new(),
+            client: Arc::new(reqwest::Client::new()),
             cache: Arc::new(Mutex::new(AccessToken::new(Some(refresh_token)))),
             debug: false,
         }
