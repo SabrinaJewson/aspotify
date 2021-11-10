@@ -1,4 +1,10 @@
-# aspotify
+# DEPRECATION NOTICE
+
+This crate is deprecated in favour of [rspotify](https://docs.rs/rspotify). Originally, this crate
+was created when rspotify didn't support async and had a much worse API than it does now. But since
+then it has much improved, and I don't have the time or energy to maintain this crate anymore.
+
+# Original README
 
 Asynchronous Rust Spotify client.
 

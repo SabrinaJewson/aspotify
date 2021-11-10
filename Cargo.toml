@@ -1,7 +1,7 @@
 [package]
 name = "aspotify"
-description = "Asynchronous client for the Spotify API"
-version = "0.7.0"
+description = "Deprecated in favour of rspotify"
+version = "0.7.1"
 readme = "README.md"
 repository = "https://github.com/KaiJewson/aspotify"
 keywords = ["Spotify", "API", "Asynchronous"]

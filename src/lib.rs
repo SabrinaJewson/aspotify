@@ -1,3 +1,5 @@
+//! Note: This crate is deprecated in favour of [rspotify](https://docs.rs/rspotify).
+//!
 //! aspotify is an asynchronous client to the [Spotify
 //! API](https://developer.spotify.com/documentation/web-api/).
 //!
